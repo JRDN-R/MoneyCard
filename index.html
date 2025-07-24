@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fill PDF Template</title>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+ <!-- your existing HTML sections here… -->
+  <title>Aircraft Over & Above / Kitting & PC O-Level Info</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 24px;
+      color: #222;
+    }
+    h2 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      font-size: 1.3em;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+    .section {
+      margin-bottom: 36px;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 20px;
+    }
+    .toggle-btn {
+      background: #276678;
+      color: #fff;
+      border: none;
+      padding: 5px 14px;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      margin-bottom: 8px;
+      margin-right: 8px;
+      transition: background 0.2s;
+    }
+    .toggle-btn:hover {
+      background: #1687a7;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+      font-size: 0.99em;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    th, td {
+      border: 1px solid #c5c5c5;
+      padding: 7px 10px;
+      text-align: center;
+    }
+    th {
+      background: #deeef5;
+      font-weight: 600;
+      letter-spacing: 1px;
+      font-size: 1em;
+    }
+    .header-row {
+      background: #e8e8e8;
+      font-weight: 700;
+      font-size: 1.08em;
+    }
+    .note {
+      font-style: italic;
+      color: #888;
+      font-size: 0.98em;
+    }
+    .usaf {
+      background: #294b4f !important;
+      color: #fff;
+      font-weight: bold;
+    }
+    .tm-col {
+      background: #fff6d1;
+      font-weight: 700;
+      font-size: 1em;
+    }
+    .highlight {
+      background: #f3f8fc;
+    }
+    .group-title {
+      font-size: 1.07em;
+      font-weight: 600;
+      color: #1d4252;
+      margin-bottom: 5px;
+      letter-spacing: 1px;
+    }
+    .desc-row td {
+      text-align: left;
+      background: #f9fafc;
+      font-size: 0.98em;
+      color: #355;
+      font-style: italic;
+      border: none;
+      padding-top: 2px;
+      padding-bottom: 2px;
+    }
+  </style>
+  <script>
+    function toggleSection(id) {
+      var section = document.getElementById(id);
+      if (section.style.display === 'none') {
+        section.style.display = '';
+      } else {
+        section.style.display = 'none';
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="section">
+    <button class="toggle-btn" onclick="toggleSection('overabove')">Toggle OVER & ABOVE Info</button>
+    <div id="overabove">
+      <div class="group-title">T-44 C</div>
+      <table>
+        <tr class="desc-row"><td colspan="9">
+          OVER & ABOVE: T44-A92.Z301098000 &nbsp;&nbsp;&nbsp;&nbsp; OVER & ABOVE METALS: T44-A92.FD0109800S
+        </td></tr>
+        <tr>
+          <th>SEQ</th><th>BUNO</th><th>E&amp;E ORDER</th><th>UCB</th><th>MISC</th>
+          <th>SALES ORDER</th><th>PROJECT NO.</th><th>REPAIR ID</th><th class="tm-col">T/M/S</th>
+        </tr>
+        <tr>
+          <td>4B35</td><td>161075</td><td>55938994</td><td>0030</td><td>0060</td>
+          <td>55937515</td><td>1000000400820</td><td>9006552619</td><td class="tm-col">T44C</td>
+        </tr>
+      </table>
+
+      <div class="group-title">T-6 A/B</div>
+      <table>
+        <tr class="desc-row"><td colspan="9">
+          OVER & ABOVE: T6A-A92.Z301098000, T6B-A92.Z301098000 &nbsp;&nbsp;&nbsp;&nbsp; OVER & ABOVE METALS: T6A-A92.FD0109800S, T6B-A92.FD0109800S
+        </td></tr>
+        <tr>
+          <th>SEQ</th><th>BUNO</th><th>E&amp;E ORDER</th><th>UCB</th><th>MISC</th>
+          <th>SALES ORDER</th><th>PROJECT NO.</th><th>REPAIR ID</th><th class="tm-col">T/M/S</th>
+        </tr>
+        <tr>
+          <td>6C75</td><td>166226</td><td>58117345</td><td>0030</td><td>0060</td>
+          <td>58116453</td><td>1000001790983</td><td>9007880954</td><td class="tm-col">T6B</td>
+        </tr>
+        <tr>
+          <td>6C74</td><td>165978</td><td>58097292</td><td>0030</td><td>0060</td>
+          <td>58096172</td><td>1000001784324</td><td>9007867773</td><td class="tm-col">T6A</td>
+        </tr>
+        <tr>
+          <td>6C73</td><td>166224</td><td>58092366</td><td>0030</td><td>0060</td>
+          <td>58088406</td><td>1000001780878</td><td>9007864579</td><td class="tm-col">T6B</td>
+        </tr>
+        <tr>
+          <td>6C72</td><td>166219</td><td>58012216</td><td>0030</td><td>0060</td>
+          <td>58010501</td><td>1000001713143</td><td>9007796956</td><td class="tm-col">T6B</td>
+        </tr>
+      </table>
+
+      <div class="group-title">USAF T-6 A/B</div>
+      <table>
+        <tr>
+          <th>SEQ</th><th>BUNO</th><th>E&amp;E ORDER</th><th>UCB</th><th>MISC</th>
+          <th>SALES ORDER</th><th>PROJECT NO.</th><th>REPAIR ID</th><th class="tm-col">T/M/S</th>
+        </tr>
+        <tr class="usaf">
+          <td>6F30</td><td>03-3674</td><td>58081346</td><td>0030</td><td>0060</td>
+          <td>58080713</td><td>1000001713458</td><td>9007860276</td><td>T6A</td>
+        </tr>
+        <tr class="usaf">
+          <td>6F29</td><td>97-3021</td><td>57962317</td><td>0030</td><td>0060</td>
+          <td>57959708</td><td>1000001700581</td><td>9007788045</td><td>T6A</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <button class="toggle-btn" onclick="toggleSection('kitting')">Toggle Kitting &amp; PC O-Level Info</button>
+    <div id="kitting">
+      <div class="group-title">T-44 C</div>
+      <table>
+        <tr class="desc-row"><td colspan="9">
+          OVER & ABOVE: T44-A92.Z301098000 &nbsp;&nbsp;&nbsp;&nbsp; OVER & ABOVE METALS: T44-A92.FD0109800S
+        </td></tr>
+        <tr>
+          <th>SEQ</th><th>BUNO</th><th>E&amp;E ORDER</th><th>UCB</th><th>MISC</th>
+          <th>KIT W/O</th><th>DCC#4 JON</th><th>REPAIR ID</th><th class="tm-col">T/M/S</th>
+        </tr>
+        <tr>
+          <td>4B35</td><td>161075</td><td>55938994</td><td>0030</td><td>0060</td>
+          <td>55937746</td><td>1000000318908</td><td>9006552619</td><td class="tm-col">T44C</td>
+        </tr>
+      </table>
+
+      <div class="group-title">T-6 A/B</div>
+      <table>
+        <tr class="desc-row"><td colspan="9">
+          OVER & ABOVE: T6A-A92.Z301098000, T6B-A92.Z301098000 &nbsp;&nbsp;&nbsp;&nbsp; OVER & ABOVE METALS: T6A-A92.FD0109800S, T6B-A92.FD0109800S
+        </td></tr>
+        <tr>
+          <th>SEQ</th><th>BUNO</th><th>E&amp;E ORDER</th><th>UCB</th><th>MISC</th>
+          <th>KIT W/O</th><th>DCC#4 JON</th><th>REPAIR ID</th><th class="tm-col">T/M/S</th>
+        </tr>
+        <tr>
+          <td>6C75</td><td>166226</td><td>58117345</td><td>0030</td><td>0060</td>
+          <td>58116453</td><td>1000001790983</td><td>9007880954</td><td class="tm-col">T6B</td>
+        </tr>
+        <tr>
+          <td>6C74</td><td>165978</td><td>58097292</td><td>0030</td><td>0060</td>
+          <td>58105159</td><td>1000001675516</td><td>9007867773</td><td class="tm-col">T6A</td>
+        </tr>
+        <tr>
+          <td>6C73</td><td>166224</td><td>58092366</td><td>0030</td><td>0060</td>
+          <td>58092027</td><td>1000001675515</td><td>9007864579</td><td class="tm-col">T6B</td>
+        </tr>
+        <tr>
+          <td>6C72</td><td>166219</td><td>58012216</td><td>0030</td><td>0060</td>
+          <td>58088438</td><td>1000001675514</td><td>9007796956</td><td class="tm-col">T6B</td>
+        </tr>
+      </table>
+
+      <div class="group-title">USAF T-6 A/B</div>
+      <table>
+        <tr>
+          <th>SEQ</th><th>BUNO</th><th>E&amp;E ORDER</th><th>UCB</th><th>MISC</th>
+          <th>KIT W/O</th><th>DCC#4 JON</th><th>REPAIR ID</th><th class="tm-col">T/M/S</th>
+        </tr>
+        <tr class="usaf">
+          <td>6F30</td><td>03-3674</td><td>58081346</td><td>0030</td><td>0060</td>
+          <td>58080713</td><td>1000001713458</td><td>9007860276</td><td>T6A</td>
+        </tr>
+        <tr class="usaf">
+          <td>6F29</td><td>97-3021</td><td>57962317</td><td>0030</td><td>0060</td>
+          <td>57989680</td><td>1000001700582</td><td>9007788045</td><td>T6A</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <button id="generatePdf" style="margin:20px;padding:8px 16px">
+    Generate PDF
+  </button>
+
+  <script>
+  document.getElementById('generatePdf').addEventListener('click', async () => {
+    // 1. load the blank template
+    const existingPdfBytes = await fetch('blank.pdf').then(r => r.arrayBuffer());
+    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+
+    // 2. embed fonts for normal and bold text
+    const helvetica  = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+    const helveticaBold = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+    // assume everything goes on page 1
+    const page = pdfDoc.getPages()[0];
+    const { width, height } = page.getSize();
+
+    // 3. define your exact layout in PDF‐points (1 pt = 1/72 in)
+    //    Measure once in your PDF viewer and paste values here
+    const layout = {
+      overabove: {
+        // group titles by their exact Y on the page
+        groups: {
+          'T-44 C':    { titleY: 760, descY: 745, headerY: 728, row1Y: 710 },
+          'T-6 A/B':   { titleY: 650, descY: 635, headerY: 618, row1Y: 600 },
+          'USAF T-6 A/B': { titleY: 540, descY: null, headerY: 525, row1Y: 507 }
+        },
+        // X positions for columns
+        columns: {
+          'SEQ':  40,
+          'BUNO': 100,
+          'E&E ORDER': 180,
+          'UCB':  280,
+          'MISC': 330,
+          'SALES ORDER': 380,
+          'PROJECT NO.': 460,
+          'REPAIR ID': 540,
+          'T/M/S': 620
+        }
+      },
+      kitting: {
+        groups: {
+          'T-44 C':    { titleY: 350, descY: 335, headerY: 318, row1Y: 300 },
+          'T-6 A/B':   { titleY: 240, descY: 225, headerY: 208, row1Y: 190 },
+          'USAF T-6 A/B': { titleY: 130, descY: null, headerY: 115, row1Y:  97 }
+        },
+        columns: {
+          'SEQ':  40,
+          'BUNO': 100,
+          'E&E ORDER': 180,
+          'UCB':  280,
+          'MISC': 330,
+          'KIT W/O': 380,
+          'DCC#4 JON': 460,
+          'REPAIR ID': 540,
+          'T/M/S': 620
+        }
+      }
+    };
+
+    // helper to read a table into JS objects
+    function parseTable(sectionId, groupTitle) {
+      const wrapper = document.getElementById(sectionId);
+      const titleEls = Array.from(wrapper.querySelectorAll('.group-title'))
+                             .filter(el => el.innerText.trim() === groupTitle);
+      if (!titleEls.length) return null;
+      const titleEl = titleEls[0];
+      const table = titleEl.nextElementSibling.tagName === 'TABLE'
+                  ? titleEl.nextElementSibling
+                  : titleEl.parentNode.querySelector('table');
+
+      const headers = Array.from(table.querySelectorAll('th')).map(th => th.innerText.trim());
+      const rows = Array.from(table.querySelectorAll('tr'))
+        .filter(r => r.querySelectorAll('td').length)
+        .map(r => {
+          const cols = Array.from(r.querySelectorAll('td')).map(td => td.innerText.trim());
+          return headers.reduce((o,h,i) => (o[h] = cols[i]||'', o), {});
+        });
+
+      // grab description if one exists
+      const descCell = table.querySelector('.desc-row td');
+      const desc = descCell ? descCell.innerText.trim() : null;
+
+      return { headers, rows, desc };
+    }
+
+    // 4. draw every section
+    for (const sectionId of ['overabove','kitting']) {
+      const cfg = layout[sectionId];
+      for (const [groupTitle, pos] of Object.entries(cfg.groups)) {
+        const data = parseTable(sectionId, groupTitle);
+        if (!data) continue;
+
+        // draw the group title
+        page.drawText(groupTitle, {
+          x: 40,                // tweak if your title sits further right
+          y: pos.titleY,
+          size: 12,
+          font: helveticaBold
+        });
+
+        // draw the description line (if any)
+        if (data.desc && pos.descY) {
+          page.drawText(data.desc, {
+            x: 40,
+            y: pos.descY,
+            size: 9,
+            font: helvetica
+          });
+        }
+
+        // draw headers
+        data.headers.forEach(header => {
+          const x = cfg.columns[header];
+          page.drawText(header, {
+            x,
+            y: pos.headerY,
+            size: 9,
+            font: helveticaBold
+          });
+        });
+
+        // draw each row
+        data.rows.forEach((row, i) => {
+          const y = pos.row1Y - i *  sixteen;
+          // row height – adjust “sixteen” to match your spacing
+          const sixteen = 16;
+          Object.entries(row).forEach(([key, text]) => {
+            const x = cfg.columns[key];
+            page.drawText(text, { x, y, size: 9, font: helvetica });
+          });
+        });
+      }
+    }
+
+    // 5. save and download
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'filled.pdf';
+    link.click();
+  });
+  </script>
+</body>
+</html>
