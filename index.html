@@ -240,149 +240,119 @@
       </table>
     </div>
   </div>
-  <button id="generatePdf" style="margin:20px;padding:8px 16px">
-    Generate PDF
-  </button>
+    <button id="generatePdf" style="margin:20px;padding:8px 16px">Generate PDF</button>
 
-<script>
-document.getElementById('generatePdf').addEventListener('click', async () => {
-  // 1. load the blank template
-  const existingPdfBytes = await fetch('blank.pdf').then(r => r.arrayBuffer());
-  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+  <!-- ---------- PDF-GENERATOR (single, fixed) ---------- -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('generatePdf');
+    if (!btn) return console.error('Generate button not found');
 
-  // 2. embed fonts for normal and bold text
-  const helvetica      = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
-  const helveticaBold  = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+    btn.addEventListener('click', async () => {
+      try {
+        /* 1. fetch template */
+        const resp = await fetch('blank.pdf');
+        if (!resp.ok) throw new Error(`blank.pdf fetch → ${resp.status}`);
+        const templateBytes = await resp.arrayBuffer();
 
-  // assume everything goes on page 1
-  const page = pdfDoc.getPages()[0];
-  const { width, height } = page.getSize();
+        /* 2. set up pdf-lib */
+        const { PDFDocument, StandardFonts } = PDFLib;
+        const pdfDoc = await PDFDocument.load(templateBytes);
+        const helvetica     = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        const page = pdfDoc.getPages()[0];
 
-  // 3. define your exact layout in PDF‐points
-  const layout = {
-    overabove: {
-      groups: {
-        'T-44 C':       { titleY: 760, descY: 745, headerY: 728, row1Y: 710 },
-        'T-6 A/B':      { titleY: 650, descY: 635, headerY: 618, row1Y: 600 },
-        'USAF T-6 A/B': { titleY: 540, descY: null, headerY: 525, row1Y: 507 }
-      },
-      columns: {
-        'SEQ':         40,
-        'BUNO':       100,
-        'E&E ORDER':  180,
-        'UCB':        280,
-        'MISC':       330,
-        'SALES ORDER':380,
-        'PROJECT NO.':460,
-        'REPAIR ID':  540,
-        'T/M/S':      620
+        /* 3. layout map (adjust X/Y once) */
+        const layout = {
+          overabove: {
+            groups: {
+              'T-44 C':       { titleY:760, descY:745, headerY:728, row1Y:710 },
+              'T-6 A/B':      { titleY:650, descY:635, headerY:618, row1Y:600 },
+              'USAF T-6 A/B': { titleY:540, descY:null, headerY:525, row1Y:507 }
+            },
+            columns: {
+              'SEQ':40,'BUNO':100,'E&E ORDER':180,'UCB':280,'MISC':330,
+              'SALES ORDER':380,'PROJECT NO.':460,'REPAIR ID':540,'T/M/S':620
+            }
+          },
+          kitting: {
+            groups: {
+              'T-44 C':       { titleY:350, descY:335, headerY:318, row1Y:300 },
+              'T-6 A/B':      { titleY:240, descY:225, headerY:208, row1Y:190 },
+              'USAF T-6 A/B': { titleY:130, descY:null, headerY:115, row1Y:97 }
+            },
+            columns: {
+              'SEQ':40,'BUNO':100,'E&E ORDER':180,'UCB':280,'MISC':330,
+              'KIT W/O':380,'DCC#4 JON':460,'REPAIR ID':540,'T/M/S':620
+            }
+          }
+        };
+
+        /* helper: extract table data */
+        function parseTable(sectionId, groupTitle) {
+          const wrapper = document.getElementById(sectionId);
+          const titleEl = [...wrapper.querySelectorAll('.group-title')]
+                           .find(el => el.textContent.trim() === groupTitle);
+          if (!titleEl) return null;
+          const table = titleEl.nextElementSibling;
+          const headers = [...table.querySelectorAll('th')].map(th => th.textContent.trim());
+          const rows = [...table.querySelectorAll('tr')]
+                        .filter(r => r.querySelectorAll('td').length)
+                        .map(r => {
+                          const cells = [...r.querySelectorAll('td')].map(td => td.textContent.trim());
+                          return headers.reduce((o,h,i) => (o[h]=cells[i]||'',o),{});
+                        });
+          const desc = table.querySelector('.desc-row td')?.textContent.trim() || null;
+          return { headers, rows, desc };
+        }
+
+        /* 4. draw everything */
+        const rowHeight = 16;
+        for (const sectionId of ['overabove','kitting']) {
+          const cfg = layout[sectionId];
+          for (const [groupTitle,pos] of Object.entries(cfg.groups)) {
+            const data = parseTable(sectionId, groupTitle);
+            if (!data) continue;
+
+            // title
+            page.drawText(groupTitle, { x:40, y:pos.titleY, size:12, font:helveticaBold });
+
+            // description
+            if (data.desc && pos.descY)
+              page.drawText(data.desc, { x:40, y:pos.descY, size:9, font:helvetica });
+
+            // headers
+            data.headers.forEach(h=>{
+              page.drawText(h,{x:cfg.columns[h],y:pos.headerY,size:9,font:helveticaBold});
+            });
+
+            // rows
+            data.rows.forEach((row,i)=>{
+              const y = pos.row1Y - i*rowHeight;
+              Object.entries(row).forEach(([k,val])=>{
+                page.drawText(val,{x:cfg.columns[k],y,size:9,font:helvetica});
+              });
+            });
+          }
+        }
+
+        /* 5. download */
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], {type:'application/pdf'});
+        const url = URL.createObjectURL(blob);
+
+        // download (switch to window.open(url,'_blank') if you prefer a new tab)
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'filled.pdf';
+        a.click();
+
+      } catch (err) {
+        console.error('PDF-gen error:', err);
+        alert('PDF generation failed:\n' + err.message);
       }
-    },
-    kitting: {
-      groups: {
-        'T-44 C':       { titleY: 350, descY: 335, headerY: 318, row1Y: 300 },
-        'T-6 A/B':      { titleY: 240, descY: 225, headerY: 208, row1Y: 190 },
-        'USAF T-6 A/B': { titleY: 130, descY: null, headerY: 115, row1Y:  97 }
-      },
-      columns: {
-        'SEQ':         40,
-        'BUNO':       100,
-        'E&E ORDER':  180,
-        'UCB':        280,
-        'MISC':       330,
-        'KIT W/O':    380,
-        'DCC#4 JON':  460,
-        'REPAIR ID':  540,
-        'T/M/S':      620
-      }
-    }
-  };
-
-  // helper to read the HTML table into JS objects
-  function parseTable(sectionId, groupTitle) {
-    const wrapper = document.getElementById(sectionId);
-    const titleEl = Array.from(wrapper.querySelectorAll('.group-title'))
-                         .find(el => el.innerText.trim() === groupTitle);
-    if (!titleEl) return null;
-    const table = titleEl.nextElementSibling.tagName === 'TABLE'
-                ? titleEl.nextElementSibling
-                : titleEl.parentNode.querySelector('table');
-
-    const headers = Array.from(table.querySelectorAll('th')).map(th => th.innerText.trim());
-    const rows = Array.from(table.querySelectorAll('tr'))
-      .filter(r => r.querySelectorAll('td').length)
-      .map(r => {
-        const cols = Array.from(r.querySelectorAll('td')).map(td => td.innerText.trim());
-        return headers.reduce((obj, h, i) => (obj[h] = cols[i] || '', obj), {});
-      });
-
-    const descCell = table.querySelector('.desc-row td');
-    const desc = descCell ? descCell.innerText.trim() : null;
-
-    return { headers, rows, desc };
-  }
-
-  // 4. draw every section onto the PDF
-  for (const sectionId of ['overabove', 'kitting']) {
-    const cfg = layout[sectionId];
-    for (const [groupTitle, pos] of Object.entries(cfg.groups)) {
-      const data = parseTable(sectionId, groupTitle);
-      if (!data) continue;
-
-      // draw the group title
-      page.drawText(groupTitle, {
-        x: 40,
-        y: pos.titleY,
-        size: 12,
-        font: helveticaBold
-      });
-
-      // draw the description line (if any)
-      if (data.desc && pos.descY) {
-        page.drawText(data.desc, {
-          x: 40,
-          y: pos.descY,
-          size: 9,
-          font: helvetica
-        });
-      }
-
-      // draw headers
-      data.headers.forEach(header => {
-        const x = cfg.columns[header];
-        page.drawText(header, {
-          x,
-          y: pos.headerY,
-          size: 9,
-          font: helveticaBold
-        });
-      });
-
-      // draw each row
-      const rowHeight = 16;  // ← moved above its first use
-      data.rows.forEach((row, i) => {
-        const y = pos.row1Y - i * rowHeight;
-        Object.entries(row).forEach(([key, text]) => {
-          const x = cfg.columns[key];
-          page.drawText(text, {
-            x,
-            y,
-            size: 9,
-            font: helvetica
-          });
-        });
-      });
-    }
-  }
-
-  // 5. serialize and trigger download
-  const pdfBytes = await pdfDoc.save();
-  const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
-  const link     = document.createElement('a');
-  link.href      = URL.createObjectURL(blob);
-  link.download  = 'filled.pdf';
-  link.click();
-});
-</script>
+    });
+  });
+  </script>
 </body>
 </html>
