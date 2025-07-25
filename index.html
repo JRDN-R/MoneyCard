@@ -244,146 +244,145 @@
     Generate PDF
   </button>
 
-  <script>
-  document.getElementById('generatePdf').addEventListener('click', async () => {
-    // 1. load the blank template
-    const existingPdfBytes = await fetch('blank.pdf').then(r => r.arrayBuffer());
-    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+<script>
+document.getElementById('generatePdf').addEventListener('click', async () => {
+  // 1. load the blank template
+  const existingPdfBytes = await fetch('blank.pdf').then(r => r.arrayBuffer());
+  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
 
-    // 2. embed fonts for normal and bold text
-    const helvetica  = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
-    const helveticaBold = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+  // 2. embed fonts for normal and bold text
+  const helvetica      = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+  const helveticaBold  = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
 
-    // assume everything goes on page 1
-    const page = pdfDoc.getPages()[0];
-    const { width, height } = page.getSize();
+  // assume everything goes on page 1
+  const page = pdfDoc.getPages()[0];
+  const { width, height } = page.getSize();
 
-    // 3. define your exact layout in PDF‐points (1 pt = 1/72 in)
-    //    Measure once in your PDF viewer and paste values here
-    const layout = {
-      overabove: {
-        // group titles by their exact Y on the page
-        groups: {
-          'T-44 C':    { titleY: 760, descY: 745, headerY: 728, row1Y: 710 },
-          'T-6 A/B':   { titleY: 650, descY: 635, headerY: 618, row1Y: 600 },
-          'USAF T-6 A/B': { titleY: 540, descY: null, headerY: 525, row1Y: 507 }
-        },
-        // X positions for columns
-        columns: {
-          'SEQ':  40,
-          'BUNO': 100,
-          'E&E ORDER': 180,
-          'UCB':  280,
-          'MISC': 330,
-          'SALES ORDER': 380,
-          'PROJECT NO.': 460,
-          'REPAIR ID': 540,
-          'T/M/S': 620
-        }
+  // 3. define your exact layout in PDF‐points
+  const layout = {
+    overabove: {
+      groups: {
+        'T-44 C':       { titleY: 760, descY: 745, headerY: 728, row1Y: 710 },
+        'T-6 A/B':      { titleY: 650, descY: 635, headerY: 618, row1Y: 600 },
+        'USAF T-6 A/B': { titleY: 540, descY: null, headerY: 525, row1Y: 507 }
       },
-      kitting: {
-        groups: {
-          'T-44 C':    { titleY: 350, descY: 335, headerY: 318, row1Y: 300 },
-          'T-6 A/B':   { titleY: 240, descY: 225, headerY: 208, row1Y: 190 },
-          'USAF T-6 A/B': { titleY: 130, descY: null, headerY: 115, row1Y:  97 }
-        },
-        columns: {
-          'SEQ':  40,
-          'BUNO': 100,
-          'E&E ORDER': 180,
-          'UCB':  280,
-          'MISC': 330,
-          'KIT W/O': 380,
-          'DCC#4 JON': 460,
-          'REPAIR ID': 540,
-          'T/M/S': 620
-        }
+      columns: {
+        'SEQ':         40,
+        'BUNO':       100,
+        'E&E ORDER':  180,
+        'UCB':        280,
+        'MISC':       330,
+        'SALES ORDER':380,
+        'PROJECT NO.':460,
+        'REPAIR ID':  540,
+        'T/M/S':      620
       }
-    };
-
-    // helper to read a table into JS objects
-    function parseTable(sectionId, groupTitle) {
-      const wrapper = document.getElementById(sectionId);
-      const titleEls = Array.from(wrapper.querySelectorAll('.group-title'))
-                             .filter(el => el.innerText.trim() === groupTitle);
-      if (!titleEls.length) return null;
-      const titleEl = titleEls[0];
-      const table = titleEl.nextElementSibling.tagName === 'TABLE'
-                  ? titleEl.nextElementSibling
-                  : titleEl.parentNode.querySelector('table');
-
-      const headers = Array.from(table.querySelectorAll('th')).map(th => th.innerText.trim());
-      const rows = Array.from(table.querySelectorAll('tr'))
-        .filter(r => r.querySelectorAll('td').length)
-        .map(r => {
-          const cols = Array.from(r.querySelectorAll('td')).map(td => td.innerText.trim());
-          return headers.reduce((o,h,i) => (o[h] = cols[i]||'', o), {});
-        });
-
-      // grab description if one exists
-      const descCell = table.querySelector('.desc-row td');
-      const desc = descCell ? descCell.innerText.trim() : null;
-
-      return { headers, rows, desc };
+    },
+    kitting: {
+      groups: {
+        'T-44 C':       { titleY: 350, descY: 335, headerY: 318, row1Y: 300 },
+        'T-6 A/B':      { titleY: 240, descY: 225, headerY: 208, row1Y: 190 },
+        'USAF T-6 A/B': { titleY: 130, descY: null, headerY: 115, row1Y:  97 }
+      },
+      columns: {
+        'SEQ':         40,
+        'BUNO':       100,
+        'E&E ORDER':  180,
+        'UCB':        280,
+        'MISC':       330,
+        'KIT W/O':    380,
+        'DCC#4 JON':  460,
+        'REPAIR ID':  540,
+        'T/M/S':      620
+      }
     }
+  };
 
-    // 4. draw every section
-    for (const sectionId of ['overabove','kitting']) {
-      const cfg = layout[sectionId];
-      for (const [groupTitle, pos] of Object.entries(cfg.groups)) {
-        const data = parseTable(sectionId, groupTitle);
-        if (!data) continue;
+  // helper to read the HTML table into JS objects
+  function parseTable(sectionId, groupTitle) {
+    const wrapper = document.getElementById(sectionId);
+    const titleEl = Array.from(wrapper.querySelectorAll('.group-title'))
+                         .find(el => el.innerText.trim() === groupTitle);
+    if (!titleEl) return null;
+    const table = titleEl.nextElementSibling.tagName === 'TABLE'
+                ? titleEl.nextElementSibling
+                : titleEl.parentNode.querySelector('table');
 
-        // draw the group title
-        page.drawText(groupTitle, {
-          x: 40,                // tweak if your title sits further right
-          y: pos.titleY,
-          size: 12,
+    const headers = Array.from(table.querySelectorAll('th')).map(th => th.innerText.trim());
+    const rows = Array.from(table.querySelectorAll('tr'))
+      .filter(r => r.querySelectorAll('td').length)
+      .map(r => {
+        const cols = Array.from(r.querySelectorAll('td')).map(td => td.innerText.trim());
+        return headers.reduce((obj, h, i) => (obj[h] = cols[i] || '', obj), {});
+      });
+
+    const descCell = table.querySelector('.desc-row td');
+    const desc = descCell ? descCell.innerText.trim() : null;
+
+    return { headers, rows, desc };
+  }
+
+  // 4. draw every section onto the PDF
+  for (const sectionId of ['overabove', 'kitting']) {
+    const cfg = layout[sectionId];
+    for (const [groupTitle, pos] of Object.entries(cfg.groups)) {
+      const data = parseTable(sectionId, groupTitle);
+      if (!data) continue;
+
+      // draw the group title
+      page.drawText(groupTitle, {
+        x: 40,
+        y: pos.titleY,
+        size: 12,
+        font: helveticaBold
+      });
+
+      // draw the description line (if any)
+      if (data.desc && pos.descY) {
+        page.drawText(data.desc, {
+          x: 40,
+          y: pos.descY,
+          size: 9,
+          font: helvetica
+        });
+      }
+
+      // draw headers
+      data.headers.forEach(header => {
+        const x = cfg.columns[header];
+        page.drawText(header, {
+          x,
+          y: pos.headerY,
+          size: 9,
           font: helveticaBold
         });
+      });
 
-        // draw the description line (if any)
-        if (data.desc && pos.descY) {
-          page.drawText(data.desc, {
-            x: 40,
-            y: pos.descY,
+      // draw each row
+      const rowHeight = 16;  // ← moved above its first use
+      data.rows.forEach((row, i) => {
+        const y = pos.row1Y - i * rowHeight;
+        Object.entries(row).forEach(([key, text]) => {
+          const x = cfg.columns[key];
+          page.drawText(text, {
+            x,
+            y,
             size: 9,
             font: helvetica
           });
-        }
-
-        // draw headers
-        data.headers.forEach(header => {
-          const x = cfg.columns[header];
-          page.drawText(header, {
-            x,
-            y: pos.headerY,
-            size: 9,
-            font: helveticaBold
-          });
         });
-
-        // draw each row
-        data.rows.forEach((row, i) => {
-          const y = pos.row1Y - i *  sixteen;
-          // row height – adjust “sixteen” to match your spacing
-          const sixteen = 16;
-          Object.entries(row).forEach(([key, text]) => {
-            const x = cfg.columns[key];
-            page.drawText(text, { x, y, size: 9, font: helvetica });
-          });
-        });
-      }
+      });
     }
+  }
 
-    // 5. save and download
-    const pdfBytes = await pdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'filled.pdf';
-    link.click();
-  });
-  </script>
+  // 5. serialize and trigger download
+  const pdfBytes = await pdfDoc.save();
+  const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
+  const link     = document.createElement('a');
+  link.href      = URL.createObjectURL(blob);
+  link.download  = 'filled.pdf';
+  link.click();
+});
+</script>
 </body>
 </html>
