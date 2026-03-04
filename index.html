@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aircraft Work Order Tool</title>
+    <title>MoneyCard — TRAINERS E&amp;E 62911</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- PDF Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         /* ========================================
@@ -146,8 +150,8 @@
         .brand-text p {
             font-size: 0.7rem;
             color: var(--text-muted);
-            font-weight: 500;
-            letter-spacing: 0.02em;
+            font-weight: 600;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
         }
 
@@ -353,9 +357,7 @@
             margin-bottom: 28px;
         }
 
-        .section-accent {
-            height: 3px;
-        }
+        .section-accent { height: 3px; }
 
         .accent-usn  { background: linear-gradient(90deg, var(--accent-usn), #facc15); }
         .accent-usaf { background: linear-gradient(90deg, var(--accent-usaf), #22d3ee); }
@@ -462,14 +464,9 @@
         }
 
         body.logged-out .editable-cell { cursor: pointer; }
+        body.logged-out .editable-cell:hover { background-color: var(--surface-hover); }
 
-        body.logged-out .editable-cell:hover {
-            background-color: var(--surface-hover);
-        }
-
-        .copied-flash {
-            background-color: var(--success-light) !important;
-        }
+        .copied-flash { background-color: var(--success-light) !important; }
 
         /* ========================================
            Delete Button
@@ -507,9 +504,7 @@
             box-shadow: var(--shadow-sm);
         }
 
-        .delete-btn:active {
-            transform: translateY(-50%) scale(0.9);
-        }
+        .delete-btn:active { transform: translateY(-50%) scale(0.9); }
 
         /* ========================================
            Modal
@@ -637,9 +632,7 @@
             pointer-events: none;
         }
 
-        #toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
+        #toast.show { transform: translateX(-50%) translateY(0); }
 
         /* ========================================
            Auth State Toggles
@@ -681,14 +674,13 @@
         @media (max-width: 480px) {
             .form-grid       { grid-template-columns: 1fr; }
             .form-group-wide { grid-column: span 1; }
-            .btn span.label  { display: none; }
         }
     </style>
 </head>
 
 <body class="logged-out">
 
-    <!-- Toast Notification -->
+    <!-- Toast -->
     <div id="toast">Copied!</div>
 
     <!-- ==================== Header ==================== -->
@@ -701,12 +693,21 @@
                     </svg>
                 </div>
                 <div class="brand-text">
-                    <h1>Aircraft Work Orders</h1>
-                    <p>FRCSE Management System</p>
+                    <h1>MoneyCard</h1>
+                    <p>TRAINERS E&amp;E 62911</p>
                 </div>
             </div>
             <div class="header-actions">
                 <span class="admin-badge admin-only">Admin Mode</span>
+
+                <!-- Export PDF — always visible -->
+                <button id="exportBtn" class="btn btn-outline">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    Export PDF
+                </button>
+
                 <button id="editBtn" class="btn btn-primary public-only">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -757,7 +758,7 @@
     <!-- ==================== Main Content ==================== -->
     <main class="main-content" id="appContainer">
 
-        <!-- Add New Entry Form (Admin Only) -->
+        <!-- Add New Entry Form -->
         <div class="card admin-only" id="orderFormContainer">
             <div class="card-header">
                 <h2>Add New Work Order</h2>
@@ -777,7 +778,7 @@
                         </div>
                         <div class="form-group">
                             <label for="seq">SEQ</label>
-                            <input type="text" id="seq" class="form-input" placeholder="e.g. 001" required>
+                            <input type="text" id="seq" class="form-input" placeholder="e.g. 6C99" required>
                         </div>
                         <div class="form-group">
                             <label for="buno">BUNO</label>
@@ -792,7 +793,7 @@
                             <input type="text" id="salesOrder" class="form-input" placeholder="Sales order #">
                         </div>
                         <div class="form-group">
-                            <label for="projectNo1">Project No.</label>
+                            <label for="projectNo1">A/C Project No.</label>
                             <input type="text" id="projectNo1" class="form-input" placeholder="Project number">
                         </div>
                         <div class="form-group">
@@ -800,7 +801,7 @@
                             <input type="text" id="kitsOrder" class="form-input" placeholder="Kits order #">
                         </div>
                         <div class="form-group">
-                            <label for="projectNo2">Project No.</label>
+                            <label for="projectNo2">Kit Project No.</label>
                             <input type="text" id="projectNo2" class="form-input" placeholder="Project number">
                         </div>
                         <div class="form-group">
@@ -818,7 +819,7 @@
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-lg">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 5v14M5 12h14"/></svg>
                             Submit to Database
                         </button>
                     </div>
@@ -826,76 +827,70 @@
             </div>
         </div>
 
-        <!-- T-6 USN Section -->
+        <!-- T-6 USN -->
         <section class="data-section">
             <div class="section-accent accent-usn"></div>
             <div class="section-header">
-                <span class="section-badge badge-usn">T-6 USN</span>
+                <span class="section-badge badge-usn">T-6 A/B</span>
                 <span class="section-label">Navy</span>
             </div>
             <div class="table-scroll">
                 <table id="table-t6-usn">
-                    <thead>
-                        <tr>
-                            <th>SEQ</th><th class="group-end">BUNO</th>
-                            <th class="group-end">E&amp;E ORDER</th>
-                            <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                            <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                            <th class="group-end">REPAIR ID</th>
-                            <th class="group-end">T/M/S</th>
-                            <th>WING S/N</th>
-                        </tr>
-                    </thead>
+                    <thead><tr>
+                        <th>SEQ</th><th class="group-end">BUNO</th>
+                        <th class="group-end">E&amp;E ORDER</th>
+                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th class="group-end">REPAIR ID</th>
+                        <th class="group-end">T/M/S</th>
+                        <th>WING S/N</th>
+                    </tr></thead>
                     <tbody id="tbody-t6-usn"></tbody>
                 </table>
             </div>
         </section>
 
-        <!-- USAF T-6 A/B Section -->
+        <!-- USAF T-6 A/B -->
         <section class="data-section">
             <div class="section-accent accent-usaf"></div>
             <div class="section-header">
-                <span class="section-badge badge-usaf">USAF T-6 A/B</span>
+                <span class="section-badge badge-usaf">T-6 A</span>
                 <span class="section-label">Air Force</span>
             </div>
             <div class="table-scroll">
                 <table id="table-usaf">
-                    <thead>
-                        <tr>
-                            <th>SEQ</th><th class="group-end">BUNO</th>
-                            <th class="group-end">E&amp;E ORDER</th>
-                            <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                            <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                            <th class="group-end">REPAIR ID</th>
-                            <th class="group-end">T/M/S</th>
-                            <th>WING S/N</th>
-                        </tr>
-                    </thead>
+                    <thead><tr>
+                        <th>SEQ</th><th class="group-end">BUNO</th>
+                        <th class="group-end">E&amp;E ORDER</th>
+                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th class="group-end">REPAIR ID</th>
+                        <th class="group-end">T/M/S</th>
+                        <th>WING S/N</th>
+                    </tr></thead>
                     <tbody id="tbody-usaf"></tbody>
                 </table>
             </div>
         </section>
 
-        <!-- T-44c Section -->
+        <!-- T-44c -->
         <section class="data-section">
             <div class="section-accent accent-t44"></div>
             <div class="section-header">
-                <span class="section-badge badge-t44">T-44c</span>
-                <span class="section-label">Multi-Engine</span>
+                <span class="section-badge badge-t44">T-44 C</span>
+                <span class="section-label">Navy/Multi-Engine</span>
             </div>
             <div class="table-scroll">
                 <table id="table-t44">
-                    <thead>
-                        <tr>
-                            <th>SEQ</th><th class="group-end">BUNO</th>
-                            <th class="group-end">E&amp;E ORDER</th>
-                            <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                            <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                            <th class="group-end">REPAIR ID</th>
-                            <th class="group-end">T/M/S</th>
-                            <th>WING S/N</th>
-                        </tr>
-                    </thead>
+                    <thead><tr>
+                        <th>SEQ</th><th class="group-end">BUNO</th>
+                        <th class="group-end">E&amp;E ORDER</th>
+                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th class="group-end">REPAIR ID</th>
+                        <th class="group-end">T/M/S</th>
+                        <th>WING S/N</th>
+                    </tr></thead>
                     <tbody id="tbody-t44"></tbody>
                 </table>
             </div>
@@ -923,7 +918,6 @@
         const auth = getAuth(app);
         const entriesCollection = collection(db, "workOrders");
 
-        // UI Elements
         const body = document.body;
         const editBtn = document.getElementById("editBtn");
         const logoutBtn = document.getElementById("logoutBtn");
@@ -932,14 +926,14 @@
         const loginForm = document.getElementById("loginForm");
         const loginError = document.getElementById("loginError");
         const toast = document.getElementById("toast");
+        const exportBtn = document.getElementById("exportBtn");
 
-        // Table Elements
         const orderForm = document.getElementById("orderForm");
         const tbodyT6Usn = document.getElementById("tbody-t6-usn");
         const tbodyUsaf = document.getElementById("tbody-usaf");
         const tbodyT44 = document.getElementById("tbody-t44");
 
-        // --- UTILITY FUNCTIONS ---
+        // --- UTILITY ---
         function getTextWithoutButton(cell) {
             let text = "";
             for (let node of cell.childNodes) {
@@ -955,15 +949,13 @@
             setTimeout(() => toast.classList.remove("show"), 2000);
         }
 
-        // --- MODAL LOGIC ---
+        // --- MODAL ---
         editBtn.addEventListener("click", () => {
             loginModal.style.display = "block";
             loginError.style.display = "none";
         });
 
-        closeModal.addEventListener("click", () => {
-            loginModal.style.display = "none";
-        });
+        closeModal.addEventListener("click", () => { loginModal.style.display = "none"; });
 
         window.addEventListener("click", (e) => {
             if (e.target === loginModal || e.target.classList.contains('modal-overlay')) {
@@ -971,7 +963,7 @@
             }
         });
 
-        // --- AUTHENTICATION LOGIC ---
+        // --- AUTH ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 body.classList.remove("logged-out");
@@ -988,46 +980,31 @@
             const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value;
             const fakeEmail = username + "@frcse.local";
-
             signInWithEmailAndPassword(auth, fakeEmail, password)
-                .then(() => {
-                    loginForm.reset();
-                    loginError.style.display = "none";
-                })
-                .catch((error) => {
-                    loginError.style.display = "block";
-                    console.error("Login failed:", error);
-                });
+                .then(() => { loginForm.reset(); loginError.style.display = "none"; })
+                .catch((error) => { loginError.style.display = "block"; console.error("Login failed:", error); });
         });
 
         logoutBtn.addEventListener("click", () => signOut(auth));
 
-        // --- DATABASE LOGIC ---
+        // --- DATA ---
         async function loadData() {
             tbodyT6Usn.innerHTML = "";
             tbodyUsaf.innerHTML = "";
             tbodyT44.innerHTML = "";
-
             try {
                 const querySnapshot = await getDocs(entriesCollection);
                 let allEntries = [];
-
                 querySnapshot.forEach((documentSnapshot) => {
                     let data = documentSnapshot.data();
                     data.id = documentSnapshot.id;
                     allEntries.push(data);
                 });
-
-                allEntries.sort((a, b) => {
-                    if (a.seq > b.seq) return -1;
-                    if (a.seq < b.seq) return 1;
-                    return 0;
-                });
+                allEntries.sort((a, b) => (a.seq > b.seq ? -1 : a.seq < b.seq ? 1 : 0));
 
                 allEntries.forEach((data) => {
                     const row = document.createElement("tr");
                     row.setAttribute("data-id", data.id);
-
                     row.innerHTML = `
                         <td class="editable-cell" data-field="seq">${data.seq || ''}</td>
                         <td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
@@ -1041,9 +1018,7 @@
                         <td class="relative-cell editable-cell" data-field="wingSn">
                             ${data.wingSn || ''}
                             <button class="delete-btn admin-only" data-id="${data.id}">✕</button>
-                        </td>
-                    `;
-
+                        </td>`;
                     if (data.aircraftType === "T-6 USN") tbodyT6Usn.appendChild(row);
                     else if (data.aircraftType === "USAF T-6 A/B") tbodyUsaf.appendChild(row);
                     else if (data.aircraftType === "T-44c") tbodyT44.appendChild(row);
@@ -1057,24 +1032,17 @@
                             try {
                                 await deleteDoc(doc(db, "workOrders", docId));
                                 loadData();
-                            } catch (error) {
-                                console.error("Error deleting doc:", error);
-                                alert("Error deleting row. Check console.");
-                            }
+                            } catch (error) { console.error("Error deleting doc:", error); alert("Error deleting row."); }
                         }
                     });
                 });
-
-            } catch (error) {
-                console.error("Error loading documents: ", error);
-            }
+            } catch (error) { console.error("Error loading documents: ", error); }
         }
 
-        // --- INLINE EDITING & CLIPBOARD LOGIC ---
+        // --- INLINE EDITING & CLIPBOARD ---
         document.getElementById("appContainer").addEventListener("click", (e) => {
             const cell = e.target.closest(".editable-cell");
             if (!cell || e.target.classList.contains('delete-btn')) return;
-
             if (body.classList.contains("logged-in")) {
                 cell.contentEditable = "true";
                 cell.focus();
@@ -1093,20 +1061,14 @@
         document.getElementById("appContainer").addEventListener("focusout", async (e) => {
             const cell = e.target.closest(".editable-cell");
             if (!cell || !body.classList.contains("logged-in") || cell.contentEditable !== "true") return;
-
             cell.contentEditable = "false";
             const newValue = getTextWithoutButton(cell);
             const fieldName = cell.getAttribute("data-field");
             const docId = cell.closest("tr").getAttribute("data-id");
-
             if (docId && fieldName) {
                 try {
-                    const docRef = doc(db, "workOrders", docId);
-                    await updateDoc(docRef, { [fieldName]: newValue });
-                } catch (error) {
-                    console.error("Error updating document: ", error);
-                    alert("Failed to save edit to database.");
-                }
+                    await updateDoc(doc(db, "workOrders", docId), { [fieldName]: newValue });
+                } catch (error) { console.error("Error updating document: ", error); alert("Failed to save edit."); }
             }
         });
 
@@ -1118,10 +1080,8 @@
             }
         });
 
-        // Handle Add New Entry Form
         orderForm.addEventListener("submit", async (e) => {
             e.preventDefault();
-
             const newEntry = {
                 aircraftType: document.getElementById("aircraftType").value,
                 seq: document.getElementById("seq").value,
@@ -1136,17 +1096,232 @@
                 wingSn: document.getElementById("wingSn").value,
                 timestamp: new Date()
             };
-
             try {
                 await addDoc(entriesCollection, newEntry);
                 orderForm.reset();
                 loadData();
-            } catch (error) {
-                console.error("Error adding document: ", error);
-                alert("Failed to save new entry to database.");
-            }
+            } catch (error) { console.error("Error adding document: ", error); alert("Failed to save new entry."); }
         });
 
+        // =============================================
+        //  PDF EXPORT
+        // =============================================
+
+        /**
+         *  Render the brand-icon SVG onto a hidden <canvas>
+         *  and return a PNG data-URL for embedding in the PDF.
+         */
+        function createLogoDataURL() {
+            return new Promise((resolve) => {
+                const s = 160;                             // render at 2× for crispness
+                const canvas = document.createElement('canvas');
+                canvas.width = s;
+                canvas.height = s;
+                const ctx = canvas.getContext('2d');
+
+                const svgMarkup = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+                        <defs>
+                            <linearGradient id="lg" x1="0" y1="0" x2="${s}" y2="${s}" gradientUnits="userSpaceOnUse">
+                                <stop offset="0" stop-color="#3b82f6"/>
+                                <stop offset="1" stop-color="#6366f1"/>
+                            </linearGradient>
+                        </defs>
+                        <rect width="${s}" height="${s}" rx="${Math.round(s * 0.2)}" fill="url(#lg)"/>
+                        <g transform="translate(${s * 0.2},${s * 0.2}) scale(${(s * 0.6 / 24).toFixed(2)})"
+                           fill="none" stroke="white" stroke-width="1.8"
+                           stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5
+                                     1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1
+                                     .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5
+                                     5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+                        </g>
+                    </svg>`;
+
+                const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+                const url  = URL.createObjectURL(blob);
+                const img  = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0, s, s);
+                    URL.revokeObjectURL(url);
+                    resolve(canvas.toDataURL('image/png'));
+                };
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    resolve(null);                         // graceful fallback
+                };
+                img.src = url;
+            });
+        }
+
+        /**
+         *  Scrape visible rows from a <tbody> element and return
+         *  an array-of-arrays (one sub-array per row), stripping
+         *  the delete-button text from the last cell.
+         */
+        function scrapeTableBody(tbodyEl) {
+            const rows = [];
+            tbodyEl.querySelectorAll('tr').forEach(tr => {
+                const cells = [];
+                tr.querySelectorAll('td').forEach(td => {
+                    let text = '';
+                    for (const node of td.childNodes) {
+                        if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('delete-btn')) continue;
+                        text += node.textContent;
+                    }
+                    cells.push(text.trim());
+                });
+                rows.push(cells);
+            });
+            return rows;
+        }
+
+        async function exportPDF() {
+
+            const { jsPDF } = window.jspdf;
+
+            /* ---------- page geometry (letter = 8.5 × 11 in) ---------- */
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+            const pageW  = 215.9;
+            const pageH  = 279.4;
+            const margin  = 12;
+            const contentW = pageW - margin * 2;
+            let y = margin;
+
+            /* ---------- logo ---------- */
+            const logoDataURL = await createLogoDataURL();
+            const logoSize = 9;
+            if (logoDataURL) {
+                doc.addImage(logoDataURL, 'PNG', margin, y, logoSize, logoSize);
+            } else {
+                // fallback: draw a solid-blue rounded rect
+                doc.setFillColor(59, 130, 246);
+                doc.roundedRect(margin, y, logoSize, logoSize, 2, 2, 'F');
+            }
+
+            /* ---------- header text (left) ---------- */
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(15, 23, 42);
+            doc.text('MoneyCard', margin + logoSize + 4, y + 4.5);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(148, 163, 184);
+            doc.text('TRAINERS E&E 62911', margin + logoSize + 4, y + 8.5);
+
+            /* ---------- header date (right) ---------- */
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            doc.text(dateStr, pageW - margin, y + 5, { align: 'right' });
+
+            y += logoSize + 5;
+
+            /* ---------- divider ---------- */
+            doc.setDrawColor(210, 218, 226);
+            doc.setLineWidth(0.4);
+            doc.line(margin, y, pageW - margin, y);
+            y += 6;
+
+            /* ---------- section definitions ---------- */
+            const sections = [
+                { name: 'T-6 A/B',       sub: 'Navy',         color: [202, 138, 4],  tbodyId: 'tbody-t6-usn' },
+                { name: 'T-6 A',  sub: 'Air Force',    color: [8, 145, 178],  tbodyId: 'tbody-usaf'   },
+                { name: 'T-44 C',          sub: 'Multi-Engine', color: [109, 40, 217], tbodyId: 'tbody-t44'    },
+            ];
+
+            const colHeaders = [
+                'SEQ', 'BUNO', 'E&E ORDER', 'SALES ORDER',
+                'PROJECT NO.', 'KITS ORDER', 'PROJECT NO.',
+                'REPAIR ID', 'T/M/S', 'WING S/N'
+            ];
+
+            /* ---------- iterate sections ---------- */
+            for (const sec of sections) {
+
+                // page-break guard
+                if (y > pageH - 40) { doc.addPage(); y = margin; }
+
+                // coloured accent bar
+                doc.setFillColor(...sec.color);
+                doc.roundedRect(margin, y, 3, 5, 1, 1, 'F');
+
+                // section title
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(15, 23, 42);
+                doc.text(sec.name, margin + 6, y + 4);
+
+                const nameW = doc.getTextWidth(sec.name);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7);
+                doc.setTextColor(148, 163, 184);
+                doc.text(sec.sub, margin + 6 + nameW + 3, y + 4);
+
+                y += 9;
+
+                // table body data
+                const rows = scrapeTableBody(document.getElementById(sec.tbodyId));
+
+                if (rows.length === 0) {
+                    doc.setFont('helvetica', 'italic');
+                    doc.setFontSize(8);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text('No entries', margin + 6, y + 3);
+                    y += 10;
+                } else {
+                    doc.autoTable({
+                        startY: y,
+                        head: [colHeaders],
+                        body: rows,
+                        margin: { left: margin, right: margin },
+                        tableWidth: contentW,
+                        showHead: 'everyPage',
+                        styles: {
+                            font: 'courier',
+                            fontSize: 6.5,
+                            cellPadding: { top: 2.2, right: 2, bottom: 2.2, left: 2 },
+                            lineColor: [210, 218, 226],
+                            lineWidth: 0.25,
+                            textColor: [15, 23, 42],
+                            overflow: 'ellipsize',
+                            halign: 'left',
+                        },
+                        headStyles: {
+                            font: 'helvetica',
+                            fontStyle: 'bold',
+                            fontSize: 5.5,
+                            fillColor: [241, 245, 249],
+                            textColor: [100, 116, 139],
+                            halign: 'left',
+                        },
+                        alternateRowStyles: {
+                            fillColor: [248, 250, 252],
+                        },
+                        bodyStyles: {
+                            fillColor: [255, 255, 255],
+                        },
+                        theme: 'grid',
+                    });
+
+                    y = doc.lastAutoTable.finalY + 10;
+                }
+            }
+
+            /* ---------- save ---------- */
+            const pad = (n) => String(n).padStart(2, '0');
+            const fName = `MoneyCard_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.pdf`;
+            doc.save(fName);
+        }
+
+        exportBtn.addEventListener("click", exportPDF);
+
+        // --- BOOT ---
         loadData();
     </script>
 </body>
