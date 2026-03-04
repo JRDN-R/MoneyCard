@@ -11,29 +11,37 @@
             background-color: #f4f4f4;
         }
         
-        /* Form Styling */
-        .form-container { 
+        /* Auth & Form Containers */
+        .container { 
             margin-bottom: 20px; 
             padding: 15px; 
             border: 2px solid #333; 
             background: #fff; 
             box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            max-width: 1000px;
         }
-        .form-container input, .form-container select { 
+        input, select { 
             margin: 5px; 
             padding: 6px; 
             border: 1px solid #ccc;
         }
-        .form-container button { 
+        button { 
             padding: 6px 15px; 
             cursor: pointer; 
             background-color: #0056b3;
             color: white;
             border: none;
             font-weight: bold;
+            margin: 5px;
         }
-        .form-container button:hover { background-color: #003d82; }
+        button:hover { background-color: #003d82; }
+        .logout-btn { background-color: #555; float: right; }
+        .logout-btn:hover { background-color: #333; }
         
+        /* Layout Handling */
+        #appContainer { display: none; } /* Hidden until logged in */
+        #loginError { color: red; display: none; margin-top: 10px; }
+
         /* Table Structure */
         table { 
             border-collapse: collapse; 
@@ -49,15 +57,9 @@
             font-family: monospace;
             font-size: 14px;
         }
-        
-        /* Standard Header Row Background */
         th { background-color: #e0e0e0; }
-        
-        /* Alternating rows for visual tracking */
         tbody tr:nth-child(even) { background-color: #f2f2f2; }
         tbody tr:nth-child(odd) { background-color: #ffffff; }
-        
-        /* Thick borders for your 7 specific column groupings */
         th.group-end, td.group-end { border-right: 3px solid #000; }
         
         /* Section Banners */
@@ -71,19 +73,14 @@
             border-bottom: none;
             color: #fff;
         }
-        /* Matching the banner colors from your screenshots */
-        .banner-t6-usn { background-color: #e6b800; color: #000; } /* Gold/Yellow */
-        .banner-usaf { background-color: #5c9999; } /* Teal */
-        .banner-t44 { background-color: #996633; } /* Brown */
+        .banner-t6-usn { background-color: #e6b800; color: #000; }
+        .banner-usaf { background-color: #5c9999; }
+        .banner-t44 { background-color: #996633; }
 
         /* Delete Button */
         .delete-btn {
             background-color: #ff4d4d;
-            color: white;
-            border: none;
             padding: 4px 8px;
-            cursor: pointer;
-            font-weight: bold;
             border-radius: 3px;
         }
         .delete-btn:hover { background-color: #cc0000; }
@@ -91,111 +88,171 @@
 </head>
 <body>
 
-    <div class="form-container">
-        <h3>Add New Entry</h3>
-        <form id="orderForm">
-            <select id="aircraftType" required>
-                <option value="" disabled selected>Select Aircraft Section...</option>
-                <option value="T-6 USN">T-6 USN (Navy)</option>
-                <option value="USAF T-6 A/B">USAF T-6 A/B</option>
-                <option value="T-44c">T-44c</option>
-            </select>
-            <br>
-            <input type="text" id="seq" placeholder="SEQ" required>
-            <input type="text" id="buno" placeholder="BUNO" required>
-            <input type="text" id="eeOrder" placeholder="E&E ORDER">
-            <input type="text" id="salesOrder" placeholder="SALES ORDER">
-            <input type="text" id="projectNo1" placeholder="PROJECT NO.">
-            <input type="text" id="kitsOrder" placeholder="KITS ORDER">
-            <input type="text" id="projectNo2" placeholder="PROJECT NO.">
-            <input type="text" id="repairId" placeholder="REPAIR ID">
-            <input type="text" id="tms" placeholder="T/M/S">
-            <input type="text" id="wingSn" placeholder="WING S/N">
-            <button type="submit">Submit to Database</button>
+    <div id="loginContainer" class="container" style="max-width: 300px;">
+        <h3>Authorized Access Only</h3>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" required style="width: 90%;"><br>
+            <input type="password" id="password" placeholder="Password" required style="width: 90%;"><br>
+            <button type="submit">Log In</button>
+            <div id="loginError">Invalid email or password.</div>
         </form>
     </div>
 
-    <div class="section-banner banner-t6-usn">T-6 USN</div>
-    <table id="table-t6-usn">
-        <thead>
-            <tr>
-                <th>SEQ</th><th class="group-end">BUNO</th>
-                <th class="group-end">E&E ORDER</th>
-                <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                <th class="group-end">REPAIR ID</th>
-                <th class="group-end">T/M/S</th>
-                <th>WING S/N</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="tbody-t6-usn"></tbody>
-    </table>
+    <div id="appContainer">
+        
+        <div class="container">
+            <button id="logoutBtn" class="logout-btn">Log Out</button>
+            <h3>Add New Work Order Entry</h3>
+            <form id="orderForm">
+                <select id="aircraftType" required>
+                    <option value="" disabled selected>Select Aircraft Section...</option>
+                    <option value="T-6 USN">T-6 USN (Navy)</option>
+                    <option value="USAF T-6 A/B">USAF T-6 A/B</option>
+                    <option value="T-44c">T-44c</option>
+                </select>
+                <br>
+                <input type="text" id="seq" placeholder="SEQ" required>
+                <input type="text" id="buno" placeholder="BUNO" required>
+                <input type="text" id="eeOrder" placeholder="E&E ORDER">
+                <input type="text" id="salesOrder" placeholder="SALES ORDER">
+                <input type="text" id="projectNo1" placeholder="PROJECT NO.">
+                <input type="text" id="kitsOrder" placeholder="KITS ORDER">
+                <input type="text" id="projectNo2" placeholder="PROJECT NO.">
+                <input type="text" id="repairId" placeholder="REPAIR ID">
+                <input type="text" id="tms" placeholder="T/M/S">
+                <input type="text" id="wingSn" placeholder="WING S/N">
+                <button type="submit">Submit to Database</button>
+            </form>
+        </div>
 
-    <div class="section-banner banner-usaf">USAF T-6 A/B</div>
-    <table id="table-usaf">
-        <thead>
-            <tr>
-                <th>SEQ</th><th class="group-end">BUNO</th>
-                <th class="group-end">E&E ORDER</th>
-                <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                <th class="group-end">REPAIR ID</th>
-                <th class="group-end">T/M/S</th>
-                <th>WING S/N</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="tbody-usaf"></tbody>
-    </table>
+        <div class="section-banner banner-t6-usn">T-6 USN</div>
+        <table id="table-t6-usn">
+            <thead>
+                <tr>
+                    <th>SEQ</th><th class="group-end">BUNO</th>
+                    <th class="group-end">E&E ORDER</th>
+                    <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                    <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                    <th class="group-end">REPAIR ID</th>
+                    <th class="group-end">T/M/S</th>
+                    <th>WING S/N</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-t6-usn"></tbody>
+        </table>
 
-    <div class="section-banner banner-t44">T-44c</div>
-    <table id="table-t44">
-        <thead>
-            <tr>
-                <th>SEQ</th><th class="group-end">BUNO</th>
-                <th class="group-end">E&E ORDER</th>
-                <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                <th class="group-end">REPAIR ID</th>
-                <th class="group-end">T/M/S</th>
-                <th>WING S/N</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="tbody-t44"></tbody>
-    </table>
+        <div class="section-banner banner-usaf">USAF T-6 A/B</div>
+        <table id="table-usaf">
+            <thead>
+                <tr>
+                    <th>SEQ</th><th class="group-end">BUNO</th>
+                    <th class="group-end">E&E ORDER</th>
+                    <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                    <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                    <th class="group-end">REPAIR ID</th>
+                    <th class="group-end">T/M/S</th>
+                    <th>WING S/N</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-usaf"></tbody>
+        </table>
+
+        <div class="section-banner banner-t44">T-44c</div>
+        <table id="table-t44">
+            <thead>
+                <tr>
+                    <th>SEQ</th><th class="group-end">BUNO</th>
+                    <th class="group-end">E&E ORDER</th>
+                    <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                    <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                    <th class="group-end">REPAIR ID</th>
+                    <th class="group-end">T/M/S</th>
+                    <th>WING S/N</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-t44"></tbody>
+        </table>
+
+    </div>
 
     <script type="module">
-        // Import only the exact functions needed for App and Firestore Database (No Analytics needed here)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        // Import Authentication functions
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-        // Your exact config from the Firebase Console
         const firebaseConfig = {
             apiKey: "AIzaSyCgBv4t4llQ0-pfG3wFW8cvaOofzyGL62o",
             authDomain: "moneycard-frcse.firebaseapp.com",
             projectId: "moneycard-frcse",
             storageBucket: "moneycard-frcse.firebasestorage.app",
             messagingSenderId: "20037122489",
-            appId: "1:20037122489:web:9300ef68c4896a2c071e68",
-            measurementId: "G-1Z9YNX74MW"
+            appId: "1:20037122489:web:9300ef68c4896a2c071e68"
         };
 
-        // Initialize Firebase app and Firestore database
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
         const entriesCollection = collection(db, "workOrders");
 
-        // DOM Elements
+        // UI Elements
+        const loginContainer = document.getElementById("loginContainer");
+        const appContainer = document.getElementById("appContainer");
+        const loginForm = document.getElementById("loginForm");
+        const loginError = document.getElementById("loginError");
+        const logoutBtn = document.getElementById("logoutBtn");
+        
+        // Table Elements
         const orderForm = document.getElementById("orderForm");
         const tbodyT6Usn = document.getElementById("tbody-t6-usn");
         const tbodyUsaf = document.getElementById("tbody-usaf");
         const tbodyT44 = document.getElementById("tbody-t44");
 
-        // Fetch and display data
+        // --- AUTHENTICATION LOGIC ---
+
+        // Listen for login state changes
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is logged in
+                loginContainer.style.display = "none";
+                appContainer.style.display = "block";
+                loadData(); // Load the database entries
+            } else {
+                // User is logged out
+                loginContainer.style.display = "block";
+                appContainer.style.display = "none";
+                loginError.style.display = "none";
+            }
+        });
+
+        // Handle Login Submission
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            
+            signInWithEmailAndPassword(auth, email, password)
+                .then(() => {
+                    loginForm.reset();
+                    loginError.style.display = "none";
+                })
+                .catch((error) => {
+                    loginError.style.display = "block";
+                    console.error("Login failed:", error);
+                });
+        });
+
+        // Handle Logout
+        logoutBtn.addEventListener("click", () => {
+            signOut(auth);
+        });
+
+        // --- DATABASE LOGIC ---
+
         async function loadData() {
-            // Clear all tables first
             tbodyT6Usn.innerHTML = "";
             tbodyUsaf.innerHTML = "";
             tbodyT44.innerHTML = "";
@@ -204,21 +261,18 @@
                 const querySnapshot = await getDocs(entriesCollection);
                 let allEntries = [];
                 
-                // Push all documents into an array with their Firebase ID
                 querySnapshot.forEach((documentSnapshot) => {
                     let data = documentSnapshot.data();
-                    data.id = documentSnapshot.id; // Store the unique ID for deleting
+                    data.id = documentSnapshot.id; 
                     allEntries.push(data);
                 });
 
-                // Sort the array descending alphanumerically by SEQ (e.g., 6C92 down to 6C83)
                 allEntries.sort((a, b) => {
                     if (a.seq > b.seq) return -1;
                     if (a.seq < b.seq) return 1;
                     return 0;
                 });
 
-                // Distribute the sorted entries to their respective tables
                 allEntries.forEach((data) => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
@@ -235,23 +289,17 @@
                         <td><button class="delete-btn" data-id="${data.id}">X</button></td>
                     `;
 
-                    // Place the row in the correct table based on the dropdown selection
-                    if (data.aircraftType === "T-6 USN") {
-                        tbodyT6Usn.appendChild(row);
-                    } else if (data.aircraftType === "USAF T-6 A/B") {
-                        tbodyUsaf.appendChild(row);
-                    } else if (data.aircraftType === "T-44c") {
-                        tbodyT44.appendChild(row);
-                    }
+                    if (data.aircraftType === "T-6 USN") tbodyT6Usn.appendChild(row);
+                    else if (data.aircraftType === "USAF T-6 A/B") tbodyUsaf.appendChild(row);
+                    else if (data.aircraftType === "T-44c") tbodyT44.appendChild(row);
                 });
 
-                // Attach event listeners to all newly created delete buttons
                 document.querySelectorAll(".delete-btn").forEach(button => {
                     button.addEventListener("click", async (e) => {
                         const docId = e.target.getAttribute("data-id");
                         if (confirm("Are you sure you want to delete this row?")) {
                             await deleteDoc(doc(db, "workOrders", docId));
-                            loadData(); // Refresh tables after deletion
+                            loadData(); 
                         }
                     });
                 });
@@ -261,11 +309,9 @@
             }
         }
 
-        // Handle Form Submission
         orderForm.addEventListener("submit", async (e) => {
             e.preventDefault(); 
             
-            // Gather input values
             const newEntry = {
                 aircraftType: document.getElementById("aircraftType").value,
                 seq: document.getElementById("seq").value,
@@ -282,18 +328,14 @@
             };
 
             try {
-                // Write to Firestore database
                 await addDoc(entriesCollection, newEntry);
-                orderForm.reset(); // Clear the inputs
-                loadData(); // Reload tables with new data
+                orderForm.reset(); 
+                loadData(); 
             } catch (error) {
                 console.error("Error adding document: ", error);
                 alert("Failed to save. Check the browser console for details.");
             }
         });
-
-        // Initial load when the page is opened
-        loadData();
     </script>
 </body>
 </html>
