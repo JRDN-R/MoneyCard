@@ -11,7 +11,24 @@
             background-color: #f4f4f4;
         }
         
-        /* Auth & Form Containers */
+        /* Top Navigation/Controls */
+        .top-controls {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        button { 
+            padding: 6px 15px; 
+            cursor: pointer; 
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            font-weight: bold;
+            margin: 5px;
+        }
+        button:hover { background-color: #003d82; }
+        
+        /* Form Containers */
         .container { 
             margin-bottom: 20px; 
             padding: 15px; 
@@ -25,29 +42,53 @@
             padding: 6px; 
             border: 1px solid #ccc;
         }
-        button { 
-            padding: 6px 15px; 
-            cursor: pointer; 
-            background-color: #0056b3;
-            color: white;
-            border: none;
-            font-weight: bold;
-            margin: 5px;
-        }
-        button:hover { background-color: #003d82; }
-        .logout-btn { background-color: #555; float: right; }
-        .logout-btn:hover { background-color: #333; }
         
-        /* Layout Handling */
-        #appContainer { display: none; } /* Hidden until logged in */
-        #loginError { color: red; display: none; margin-top: 10px; }
+        /* Login Modal (Popup) */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; 
+            z-index: 10; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.5); 
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            border: 2px solid #333;
+            width: 300px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .close-btn {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-btn:hover { color: #000; }
+        #loginError { color: red; display: none; margin-top: 10px; font-size: 14px; }
+
+        /* Auth State UI Toggles */
+        body.logged-out .admin-only { display: none !important; }
+        body.logged-in .public-only { display: none !important; }
 
         /* Table Structure */
+        .table-wrapper {
+            /* Adds padding on the right so floating buttons don't cause horizontal scrolling */
+            padding-right: 50px; 
+            margin-bottom: 30px;
+        }
         table { 
             border-collapse: collapse; 
             width: 100%; 
             text-align: center; 
-            margin-bottom: 30px;
             background-color: #fff;
             border: 3px solid #000;
         }
@@ -61,6 +102,21 @@
         tbody tr:nth-child(even) { background-color: #f2f2f2; }
         tbody tr:nth-child(odd) { background-color: #ffffff; }
         th.group-end, td.group-end { border-right: 3px solid #000; }
+        
+        /* Floating Delete Button Logic */
+        .relative-cell {
+            position: relative; /* Allows absolute positioning inside this cell */
+        }
+        .delete-btn {
+            position: absolute;
+            right: -35px; /* Floats it right outside the table border */
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #ff4d4d;
+            padding: 4px 8px;
+            border-radius: 3px;
+        }
+        .delete-btn:hover { background-color: #cc0000; }
         
         /* Section Banners */
         .section-banner {
@@ -76,32 +132,31 @@
         .banner-t6-usn { background-color: #e6b800; color: #000; }
         .banner-usaf { background-color: #5c9999; }
         .banner-t44 { background-color: #996633; }
-
-        /* Delete Button */
-        .delete-btn {
-            background-color: #ff4d4d;
-            padding: 4px 8px;
-            border-radius: 3px;
-        }
-        .delete-btn:hover { background-color: #cc0000; }
     </style>
 </head>
-<body>
+<body class="logged-out">
 
-    <div id="loginContainer" class="container" style="max-width: 300px;">
-        <h3>Authorized Access Only</h3>
-        <form id="loginForm">
-            <input type="email" id="email" placeholder="Email" required style="width: 90%;"><br>
-            <input type="password" id="password" placeholder="Password" required style="width: 90%;"><br>
-            <button type="submit">Log In</button>
-            <div id="loginError">Invalid email or password.</div>
-        </form>
+    <div class="top-controls">
+        <button id="editBtn" class="public-only">Edit</button>
+        <button id="logoutBtn" class="admin-only" style="background-color: #555;">Log Out</button>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <h3>Authorized Access</h3>
+            <form id="loginForm">
+                <input type="email" id="email" placeholder="Email" required style="width: 90%; box-sizing: border-box;"><br>
+                <input type="password" id="password" placeholder="Password" required style="width: 90%; box-sizing: border-box;"><br>
+                <button type="submit" style="width: 90%;">Log In</button>
+                <div id="loginError">Invalid email or password.</div>
+            </form>
+        </div>
     </div>
 
     <div id="appContainer">
         
-        <div class="container">
-            <button id="logoutBtn" class="logout-btn">Log Out</button>
+        <div class="container admin-only" id="orderFormContainer">
             <h3>Add New Work Order Entry</h3>
             <form id="orderForm">
                 <select id="aircraftType" required>
@@ -126,62 +181,64 @@
         </div>
 
         <div class="section-banner banner-t6-usn">T-6 USN</div>
-        <table id="table-t6-usn">
-            <thead>
-                <tr>
-                    <th>SEQ</th><th class="group-end">BUNO</th>
-                    <th class="group-end">E&E ORDER</th>
-                    <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                    <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                    <th class="group-end">REPAIR ID</th>
-                    <th class="group-end">T/M/S</th>
-                    <th>WING S/N</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="tbody-t6-usn"></tbody>
-        </table>
+        <div class="table-wrapper">
+            <table id="table-t6-usn">
+                <thead>
+                    <tr>
+                        <th>SEQ</th><th class="group-end">BUNO</th>
+                        <th class="group-end">E&E ORDER</th>
+                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th class="group-end">REPAIR ID</th>
+                        <th class="group-end">T/M/S</th>
+                        <th>WING S/N</th>
+                        </tr>
+                </thead>
+                <tbody id="tbody-t6-usn"></tbody>
+            </table>
+        </div>
 
         <div class="section-banner banner-usaf">USAF T-6 A/B</div>
-        <table id="table-usaf">
-            <thead>
-                <tr>
-                    <th>SEQ</th><th class="group-end">BUNO</th>
-                    <th class="group-end">E&E ORDER</th>
-                    <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                    <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                    <th class="group-end">REPAIR ID</th>
-                    <th class="group-end">T/M/S</th>
-                    <th>WING S/N</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="tbody-usaf"></tbody>
-        </table>
+        <div class="table-wrapper">
+            <table id="table-usaf">
+                <thead>
+                    <tr>
+                        <th>SEQ</th><th class="group-end">BUNO</th>
+                        <th class="group-end">E&E ORDER</th>
+                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th class="group-end">REPAIR ID</th>
+                        <th class="group-end">T/M/S</th>
+                        <th>WING S/N</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-usaf"></tbody>
+            </table>
+        </div>
 
         <div class="section-banner banner-t44">T-44c</div>
-        <table id="table-t44">
-            <thead>
-                <tr>
-                    <th>SEQ</th><th class="group-end">BUNO</th>
-                    <th class="group-end">E&E ORDER</th>
-                    <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                    <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                    <th class="group-end">REPAIR ID</th>
-                    <th class="group-end">T/M/S</th>
-                    <th>WING S/N</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="tbody-t44"></tbody>
-        </table>
+        <div class="table-wrapper">
+            <table id="table-t44">
+                <thead>
+                    <tr>
+                        <th>SEQ</th><th class="group-end">BUNO</th>
+                        <th class="group-end">E&E ORDER</th>
+                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th class="group-end">REPAIR ID</th>
+                        <th class="group-end">T/M/S</th>
+                        <th>WING S/N</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-t44"></tbody>
+            </table>
+        </div>
 
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-        // Import Authentication functions
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -199,11 +256,13 @@
         const entriesCollection = collection(db, "workOrders");
 
         // UI Elements
-        const loginContainer = document.getElementById("loginContainer");
-        const appContainer = document.getElementById("appContainer");
+        const body = document.body;
+        const editBtn = document.getElementById("editBtn");
+        const logoutBtn = document.getElementById("logoutBtn");
+        const loginModal = document.getElementById("loginModal");
+        const closeModal = document.getElementById("closeModal");
         const loginForm = document.getElementById("loginForm");
         const loginError = document.getElementById("loginError");
-        const logoutBtn = document.getElementById("logoutBtn");
         
         // Table Elements
         const orderForm = document.getElementById("orderForm");
@@ -211,24 +270,37 @@
         const tbodyUsaf = document.getElementById("tbody-usaf");
         const tbodyT44 = document.getElementById("tbody-t44");
 
-        // --- AUTHENTICATION LOGIC ---
+        // --- MODAL LOGIC ---
+        editBtn.addEventListener("click", () => {
+            loginModal.style.display = "block";
+            loginError.style.display = "none";
+        });
 
-        // Listen for login state changes
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User is logged in
-                loginContainer.style.display = "none";
-                appContainer.style.display = "block";
-                loadData(); // Load the database entries
-            } else {
-                // User is logged out
-                loginContainer.style.display = "block";
-                appContainer.style.display = "none";
-                loginError.style.display = "none";
+        closeModal.addEventListener("click", () => {
+            loginModal.style.display = "none";
+        });
+
+        // Close modal if user clicks outside of the content box
+        window.addEventListener("click", (e) => {
+            if (e.target == loginModal) {
+                loginModal.style.display = "none";
             }
         });
 
-        // Handle Login Submission
+        // --- AUTHENTICATION LOGIC ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Logged in: toggle body classes to show admin controls
+                body.classList.remove("logged-out");
+                body.classList.add("logged-in");
+                loginModal.style.display = "none"; 
+            } else {
+                // Logged out: hide admin controls
+                body.classList.remove("logged-in");
+                body.classList.add("logged-out");
+            }
+        });
+
         loginForm.addEventListener("submit", (e) => {
             e.preventDefault();
             const email = document.getElementById("email").value;
@@ -245,13 +317,12 @@
                 });
         });
 
-        // Handle Logout
         logoutBtn.addEventListener("click", () => {
             signOut(auth);
         });
 
         // --- DATABASE LOGIC ---
-
+        // Data loads for EVERYONE immediately, regardless of login state
         async function loadData() {
             tbodyT6Usn.innerHTML = "";
             tbodyUsaf.innerHTML = "";
@@ -275,6 +346,9 @@
 
                 allEntries.forEach((data) => {
                     const row = document.createElement("tr");
+                    
+                    // The last <td> has 'relative-cell' so the button can float outside it.
+                    // The button has 'admin-only' class so it hides when logged out.
                     row.innerHTML = `
                         <td>${data.seq || ''}</td>
                         <td class="group-end">${data.buno || ''}</td>
@@ -285,8 +359,10 @@
                         <td class="group-end">${data.projectNo2 || ''}</td>
                         <td class="group-end">${data.repairId || ''}</td>
                         <td class="group-end">${data.tms || ''}</td>
-                        <td>${data.wingSn || ''}</td>
-                        <td><button class="delete-btn" data-id="${data.id}">X</button></td>
+                        <td class="relative-cell">
+                            ${data.wingSn || ''}
+                            <button class="delete-btn admin-only" data-id="${data.id}">X</button>
+                        </td>
                     `;
 
                     if (data.aircraftType === "T-6 USN") tbodyT6Usn.appendChild(row);
@@ -336,6 +412,9 @@
                 alert("Failed to save. Check the browser console for details.");
             }
         });
+
+        // Fire loadData immediately so the public can see the table
+        loadData();
     </script>
 </body>
 </html>
