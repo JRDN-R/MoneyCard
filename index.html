@@ -4,277 +4,906 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aircraft Work Order Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <style>
-        body { 
-            font-family: sans-serif; 
-            margin: 20px; 
-            background-color: #f4f4f4;
-            overflow-x: hidden; 
+        /* ========================================
+           Custom Properties
+           ======================================== */
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-active: #1d4ed8;
+            --primary-light: rgba(59,130,246,0.08);
+            --primary-ring: rgba(59,130,246,0.25);
+
+            --bg: #f1f5f9;
+            --surface: #ffffff;
+            --surface-hover: #f8fafc;
+
+            --text: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --text-inverse: #ffffff;
+
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --danger-light: rgba(239,68,68,0.08);
+            --success: #10b981;
+            --success-light: rgba(16,185,129,0.12);
+
+            --accent-usn: #eab308;
+            --accent-usn-bg: rgba(234,179,8,0.07);
+            --accent-usaf: #06b6d4;
+            --accent-usaf-bg: rgba(6,182,212,0.07);
+            --accent-t44: #8b5cf6;
+            --accent-t44-bg: rgba(139,92,246,0.07);
+
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+
+            --radius-sm: 6px;
+            --radius: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 20px;
+            --radius-full: 9999px;
+
+            --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+            --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -4px rgba(0,0,0,0.04);
+            --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.03);
+            --shadow-xl: 0 25px 50px -12px rgba(0,0,0,0.18);
+
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-out: cubic-bezier(0, 0, 0.2, 1);
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --dur-fast: 150ms;
+            --dur: 200ms;
+            --dur-slow: 300ms;
         }
-        
-        /* Top Navigation/Controls */
-        .top-controls {
-            margin-bottom: 20px;
+
+        /* ========================================
+           Reset & Base
+           ======================================== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* ========================================
+           Header
+           ======================================== */
+        .app-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .header-inner {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 28px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+        }
+
+        .brand-icon svg { width: 20px; height: 20px; }
+
+        .brand-text h1 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .brand-text p {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            background: var(--success-light);
+            color: var(--success);
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        .admin-badge::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        /* ========================================
+           Buttons
+           ======================================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 9px 18px;
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            line-height: 1;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--dur) var(--ease);
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .btn:active { transform: scale(0.97); }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow-xs), inset 0 1px 0 rgba(255,255,255,0.12);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.12);
+        }
+
+        .btn-primary:active { background: var(--primary-active); }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background: var(--surface-hover);
+            border-color: var(--border-strong);
+            color: var(--text);
+        }
+
+        .btn-lg {
+            padding: 12px 26px;
+            font-size: 0.875rem;
+            border-radius: var(--radius);
+        }
+
+        .btn-lg svg { width: 18px; height: 18px; }
+
+        /* ========================================
+           Main Content
+           ======================================== */
+        .main-content {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 32px 28px 80px;
+        }
+
+        /* ========================================
+           Card
+           ======================================== */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+
+        .card-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .card-header p {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .card-body { padding: 28px; }
+
+        /* ========================================
+           Form
+           ======================================== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group-wide { grid-column: span 2; }
+
+        .form-group label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .form-input,
+        .form-select {
+            padding: 10px 13px;
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            color: var(--text);
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            transition: all var(--dur) var(--ease);
+            width: 100%;
+        }
+
+        .form-input::placeholder { color: var(--text-muted); font-weight: 400; }
+        .form-input:hover, .form-select:hover { border-color: var(--border-strong); }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-ring);
+        }
+
+        .form-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 36px;
+        }
+
+        .form-actions {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
             display: flex;
             justify-content: flex-end;
         }
-        button { 
-            padding: 6px 15px; 
-            cursor: pointer; 
-            background-color: #0056b3;
-            color: white;
-            border: none;
-            font-weight: bold;
-            margin: 5px;
-        }
-        button:hover { background-color: #003d82; }
-        
-        /* Form Containers */
-        .container { 
-            margin-bottom: 20px; 
-            padding: 15px; 
-            border: 2px solid #333; 
-            background: #fff; 
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
-            max-width: 1000px;
-        }
-        input, select { 
-            margin: 5px; 
-            padding: 6px; 
-            border: 1px solid #ccc;
-        }
-        
-        /* Login Modal */
-        .modal {
-            display: none; 
-            position: fixed; 
-            z-index: 100; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            height: 100%; 
-            background-color: rgba(0,0,0,0.5); 
-        }
-        .modal-content {
-            background-color: #fff;
-            margin: 15% auto;
-            padding: 20px;
-            border: 2px solid #333;
-            width: 300px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            position: relative;
-        }
-        .close-btn {
-            color: #aaa;
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close-btn:hover { color: #000; }
-        #loginError { color: red; display: none; margin-top: 10px; font-size: 14px; }
 
-        /* Auth State UI Toggles */
-        body.logged-out .admin-only { display: none !important; }
-        body.logged-in .public-only { display: none !important; }
+        /* ========================================
+           Data Sections
+           ======================================== */
+        .data-section {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
 
-        /* Table Structure */
-        .table-wrapper {
-            padding-right: 50px; 
-            margin-bottom: 30px;
+        .section-accent {
+            height: 3px;
         }
-        table { 
-            border-collapse: collapse; 
-            width: 100%; 
-            text-align: center; 
-            background-color: #fff;
-            border: 3px solid #000;
+
+        .accent-usn  { background: linear-gradient(90deg, var(--accent-usn), #facc15); }
+        .accent-usaf { background: linear-gradient(90deg, var(--accent-usaf), #22d3ee); }
+        .accent-t44  { background: linear-gradient(90deg, var(--accent-t44), #a78bfa); }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 28px;
+            border-bottom: 1px solid var(--border);
         }
-        th, td { 
-            border: 1px solid #ccc; 
-            padding: 8px; 
-            font-family: monospace;
-            font-size: 14px;
+
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            letter-spacing: 0.015em;
         }
-        th { background-color: #e0e0e0; }
-        tbody tr:nth-child(even) { background-color: #f2f2f2; }
-        tbody tr:nth-child(odd) { background-color: #ffffff; }
-        th.group-end, td.group-end { border-right: 3px solid #000; }
-        
-        /* Interactive Cells */
+
+        .badge-usn  { background: var(--accent-usn-bg); color: #92400e; border: 1px solid rgba(234,179,8,0.18); }
+        .badge-usaf { background: var(--accent-usaf-bg); color: #0e7490; border: 1px solid rgba(6,182,212,0.18); }
+        .badge-t44  { background: var(--accent-t44-bg); color: #5b21b6; border: 1px solid rgba(139,92,246,0.18); }
+
+        .section-label {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* ========================================
+           Table
+           ======================================== */
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body.logged-in .table-scroll { padding-right: 44px; }
+
+        .table-scroll::-webkit-scrollbar { height: 6px; }
+        .table-scroll::-webkit-scrollbar-track { background: transparent; }
+        .table-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+        .table-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 920px;
+        }
+
+        th {
+            font-family: var(--font-sans);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            padding: 11px 18px;
+            text-align: left;
+            background: var(--surface-hover);
+            border-bottom: 1.5px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            font-family: var(--font-mono);
+            font-size: 0.8125rem;
+            font-weight: 400;
+            padding: 12px 18px;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            transition: background-color var(--dur-fast) var(--ease);
+        }
+
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background-color: var(--surface-hover); }
+
+        th.group-end, td.group-end {
+            border-right: 2px solid var(--border-strong);
+        }
+
+        /* ========================================
+           Interactive Cells
+           ======================================== */
         body.logged-in .editable-cell:hover {
-            outline: 2px dashed #0056b3;
-            outline-offset: -2px;
+            background-color: var(--primary-light) !important;
             cursor: text;
-            background-color: #e6f2ff;
-        }
-        body.logged-out .editable-cell {
-            cursor: pointer;
-        }
-        body.logged-out .editable-cell:hover {
-            background-color: #f0f0f0;
-        }
-        .copied-flash {
-            background-color: #a8e6cf !important;
-            transition: background-color 0.2s ease-out;
+            outline: 2px solid var(--primary);
+            outline-offset: -2px;
+            border-radius: 2px;
         }
 
-        /* Floating Delete Button */
-        .relative-cell {
-            position: relative; 
+        [contenteditable="true"] {
+            outline: 2px solid var(--primary) !important;
+            outline-offset: -2px;
+            background-color: var(--primary-light) !important;
+            border-radius: 2px;
+            caret-color: var(--primary);
         }
+
+        body.logged-out .editable-cell { cursor: pointer; }
+
+        body.logged-out .editable-cell:hover {
+            background-color: var(--surface-hover);
+        }
+
+        .copied-flash {
+            background-color: var(--success-light) !important;
+        }
+
+        /* ========================================
+           Delete Button
+           ======================================== */
+        .relative-cell { position: relative; }
+
         .delete-btn {
             position: absolute;
-            right: -35px; 
+            right: -36px;
             top: 50%;
             transform: translateY(-50%);
-            background-color: #ff4d4d;
-            padding: 4px 8px;
-            border-radius: 3px;
-            z-index: 10; 
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--danger-light);
+            color: var(--danger);
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--dur) var(--ease);
+            padding: 0;
+            line-height: 1;
+            z-index: 10;
         }
-        .delete-btn:hover { background-color: #cc0000; }
-        
-        /* Section Banners */
-        .section-banner {
-            font-weight: bold;
-            font-size: 18px;
-            text-align: left;
-            padding: 5px 10px;
-            font-style: italic;
-            border: 3px solid #000;
-            border-bottom: none;
-            color: #fff;
-        }
-        .banner-t6-usn { background-color: #e6b800; color: #000; }
-        .banner-usaf { background-color: #5c9999; }
-        .banner-t44 { background-color: #996633; }
 
-        /* Toast Notification */
+        .delete-btn:hover {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger-hover);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .delete-btn:active {
+            transform: translateY(-50%) scale(0.9);
+        }
+
+        /* ========================================
+           Modal
+           ======================================== */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            inset: 0;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15,23,42,0.45);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--surface);
+            width: calc(100% - 32px);
+            max-width: 420px;
+            margin: 0 auto;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: 36px;
+            animation: modal-enter var(--dur-slow) var(--ease-bounce);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--dur) var(--ease);
+        }
+
+        .modal-close:hover { background: var(--bg); color: var(--text); }
+        .modal-close svg { width: 18px; height: 18px; }
+
+        .modal-icon {
+            width: 52px;
+            height: 52px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+
+        .modal-icon svg { width: 24px; height: 24px; }
+
+        .modal-title {
+            font-size: 1.1875rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-bottom: 4px;
+        }
+
+        .modal-subtitle {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        .modal-form .form-group { margin-bottom: 16px; }
+        .modal-form .form-input { padding: 11px 14px; }
+
+        .modal-form .btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 0.9375rem;
+            margin-top: 8px;
+            border-radius: var(--radius);
+        }
+
+        #loginError {
+            display: none;
+            margin-top: 16px;
+            padding: 11px 16px;
+            background: var(--danger-light);
+            color: var(--danger);
+            border: 1px solid rgba(239,68,68,0.15);
+            border-radius: var(--radius);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* ========================================
+           Toast
+           ======================================== */
         #toast {
             position: fixed;
-            bottom: 20px;
-            right: -300px; 
-            background-color: #333;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 4px;
-            font-weight: bold;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: right 0.4s ease-in-out;
-            z-index: 1000;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(calc(100% + 48px));
+            background: var(--text);
+            color: var(--text-inverse);
+            padding: 11px 22px;
+            border-radius: var(--radius-full);
+            font-family: var(--font-sans);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            transition: transform var(--dur-slow) var(--ease-bounce);
+            z-index: 200;
+            white-space: nowrap;
+            pointer-events: none;
         }
+
         #toast.show {
-            right: 20px; 
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ========================================
+           Auth State Toggles
+           ======================================== */
+        body.logged-out .admin-only { display: none !important; }
+        body.logged-in  .public-only { display: none !important; }
+
+        /* ========================================
+           Animations
+           ======================================== */
+        @keyframes modal-enter {
+            from { opacity: 0; transform: translateY(calc(-50% + 16px)) scale(0.96); }
+            to   { opacity: 1; transform: translateY(-50%) scale(1); }
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.35; }
+        }
+
+        /* ========================================
+           Responsive
+           ======================================== */
+        @media (max-width: 768px) {
+            .header-inner   { height: 56px; padding: 0 16px; }
+            .brand-text p   { display: none; }
+            .brand-text h1  { font-size: 1rem; }
+            .brand-icon     { width: 36px; height: 36px; }
+            .main-content   { padding: 20px 12px 60px; }
+            .card-body      { padding: 20px 16px; }
+            .card-header    { padding: 16px; }
+            .section-header { padding: 12px 16px; }
+            .form-grid      { grid-template-columns: 1fr 1fr; gap: 14px; }
+            .form-group-wide { grid-column: span 2; }
+            th, td          { padding: 10px 14px; }
+            .modal-content  { padding: 28px 24px; }
+        }
+
+        @media (max-width: 480px) {
+            .form-grid       { grid-template-columns: 1fr; }
+            .form-group-wide { grid-column: span 1; }
+            .btn span.label  { display: none; }
         }
     </style>
 </head>
+
 <body class="logged-out">
 
+    <!-- Toast Notification -->
     <div id="toast">Copied!</div>
 
-    <div class="top-controls">
-        <button id="editBtn" class="public-only">Edit</button>
-        <button id="logoutBtn" class="admin-only" style="background-color: #555;">Log Out</button>
-    </div>
+    <!-- ==================== Header ==================== -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="header-brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>Aircraft Work Orders</h1>
+                    <p>FRCSE Management System</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <span class="admin-badge admin-only">Admin Mode</span>
+                <button id="editBtn" class="btn btn-primary public-only">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    Edit Mode
+                </button>
+                <button id="logoutBtn" class="btn btn-outline admin-only">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Log Out
+                </button>
+            </div>
+        </div>
+    </header>
 
+    <!-- ==================== Login Modal ==================== -->
     <div id="loginModal" class="modal">
+        <div class="modal-overlay"></div>
         <div class="modal-content">
-            <span class="close-btn" id="closeModal">&times;</span>
-            <h3>Authorized Access</h3>
-            <form id="loginForm">
-                <input type="text" id="username" placeholder="Username" required style="width: 90%; box-sizing: border-box;"><br>
-                <input type="password" id="password" placeholder="Password" required style="width: 90%; box-sizing: border-box;"><br>
-                <button type="submit" style="width: 90%;">Log In</button>
-                <div id="loginError">Invalid username or password.</div>
+            <button class="modal-close" id="closeModal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+            </button>
+            <div class="modal-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <div class="modal-title">Authorized Access</div>
+            <div class="modal-subtitle">Enter your credentials to manage work orders.</div>
+            <form id="loginForm" class="modal-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" class="form-input" placeholder="Enter username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Log In</button>
+                <div id="loginError">Invalid username or password. Please try again.</div>
             </form>
         </div>
     </div>
 
-    <div id="appContainer">
-        
-        <div class="container admin-only" id="orderFormContainer">
-            <h3>Add New Work Order Entry</h3>
-            <form id="orderForm">
-                <select id="aircraftType" required>
-                    <option value="" disabled selected>Select Aircraft Section...</option>
-                    <option value="T-6 USN">T-6 USN (Navy)</option>
-                    <option value="USAF T-6 A/B">USAF T-6 A/B</option>
-                    <option value="T-44c">T-44c</option>
-                </select>
-                <br>
-                <input type="text" id="seq" placeholder="SEQ" required>
-                <input type="text" id="buno" placeholder="BUNO" required>
-                <input type="text" id="eeOrder" placeholder="E&E ORDER">
-                <input type="text" id="salesOrder" placeholder="SALES ORDER">
-                <input type="text" id="projectNo1" placeholder="PROJECT NO.">
-                <input type="text" id="kitsOrder" placeholder="KITS ORDER">
-                <input type="text" id="projectNo2" placeholder="PROJECT NO.">
-                <input type="text" id="repairId" placeholder="REPAIR ID">
-                <input type="text" id="tms" placeholder="T/M/S">
-                <input type="text" id="wingSn" placeholder="WING S/N">
-                <button type="submit">Submit to Database</button>
-            </form>
+    <!-- ==================== Main Content ==================== -->
+    <main class="main-content" id="appContainer">
+
+        <!-- Add New Entry Form (Admin Only) -->
+        <div class="card admin-only" id="orderFormContainer">
+            <div class="card-header">
+                <h2>Add New Work Order</h2>
+                <p>Fill in the fields below and submit to create a new entry.</p>
+            </div>
+            <div class="card-body">
+                <form id="orderForm">
+                    <div class="form-grid">
+                        <div class="form-group form-group-wide">
+                            <label for="aircraftType">Aircraft Section</label>
+                            <select id="aircraftType" class="form-select" required>
+                                <option value="" disabled selected>Select aircraft section…</option>
+                                <option value="T-6 USN">T-6 USN (Navy)</option>
+                                <option value="USAF T-6 A/B">USAF T-6 A/B</option>
+                                <option value="T-44c">T-44c</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="seq">SEQ</label>
+                            <input type="text" id="seq" class="form-input" placeholder="e.g. 001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="buno">BUNO</label>
+                            <input type="text" id="buno" class="form-input" placeholder="e.g. 166321" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="eeOrder">E&amp;E Order</label>
+                            <input type="text" id="eeOrder" class="form-input" placeholder="E&E order #">
+                        </div>
+                        <div class="form-group">
+                            <label for="salesOrder">Sales Order</label>
+                            <input type="text" id="salesOrder" class="form-input" placeholder="Sales order #">
+                        </div>
+                        <div class="form-group">
+                            <label for="projectNo1">Project No.</label>
+                            <input type="text" id="projectNo1" class="form-input" placeholder="Project number">
+                        </div>
+                        <div class="form-group">
+                            <label for="kitsOrder">Kits Order</label>
+                            <input type="text" id="kitsOrder" class="form-input" placeholder="Kits order #">
+                        </div>
+                        <div class="form-group">
+                            <label for="projectNo2">Project No.</label>
+                            <input type="text" id="projectNo2" class="form-input" placeholder="Project number">
+                        </div>
+                        <div class="form-group">
+                            <label for="repairId">Repair ID</label>
+                            <input type="text" id="repairId" class="form-input" placeholder="Repair ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="tms">T/M/S</label>
+                            <input type="text" id="tms" class="form-input" placeholder="Type / Model / Series">
+                        </div>
+                        <div class="form-group">
+                            <label for="wingSn">Wing S/N</label>
+                            <input type="text" id="wingSn" class="form-input" placeholder="Wing serial #">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                            Submit to Database
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
-        <div class="section-banner banner-t6-usn">T-6 USN</div>
-        <div class="table-wrapper">
-            <table id="table-t6-usn">
-                <thead>
-                    <tr>
-                        <th>SEQ</th><th class="group-end">BUNO</th>
-                        <th class="group-end">E&E ORDER</th>
-                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th class="group-end">REPAIR ID</th>
-                        <th class="group-end">T/M/S</th>
-                        <th>WING S/N</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-t6-usn"></tbody>
-            </table>
-        </div>
+        <!-- T-6 USN Section -->
+        <section class="data-section">
+            <div class="section-accent accent-usn"></div>
+            <div class="section-header">
+                <span class="section-badge badge-usn">T-6 USN</span>
+                <span class="section-label">Navy</span>
+            </div>
+            <div class="table-scroll">
+                <table id="table-t6-usn">
+                    <thead>
+                        <tr>
+                            <th>SEQ</th><th class="group-end">BUNO</th>
+                            <th class="group-end">E&amp;E ORDER</th>
+                            <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                            <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                            <th class="group-end">REPAIR ID</th>
+                            <th class="group-end">T/M/S</th>
+                            <th>WING S/N</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-t6-usn"></tbody>
+                </table>
+            </div>
+        </section>
 
-        <div class="section-banner banner-usaf">USAF T-6 A/B</div>
-        <div class="table-wrapper">
-            <table id="table-usaf">
-                <thead>
-                    <tr>
-                        <th>SEQ</th><th class="group-end">BUNO</th>
-                        <th class="group-end">E&E ORDER</th>
-                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th class="group-end">REPAIR ID</th>
-                        <th class="group-end">T/M/S</th>
-                        <th>WING S/N</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-usaf"></tbody>
-            </table>
-        </div>
+        <!-- USAF T-6 A/B Section -->
+        <section class="data-section">
+            <div class="section-accent accent-usaf"></div>
+            <div class="section-header">
+                <span class="section-badge badge-usaf">USAF T-6 A/B</span>
+                <span class="section-label">Air Force</span>
+            </div>
+            <div class="table-scroll">
+                <table id="table-usaf">
+                    <thead>
+                        <tr>
+                            <th>SEQ</th><th class="group-end">BUNO</th>
+                            <th class="group-end">E&amp;E ORDER</th>
+                            <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                            <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                            <th class="group-end">REPAIR ID</th>
+                            <th class="group-end">T/M/S</th>
+                            <th>WING S/N</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-usaf"></tbody>
+                </table>
+            </div>
+        </section>
 
-        <div class="section-banner banner-t44">T-44c</div>
-        <div class="table-wrapper">
-            <table id="table-t44">
-                <thead>
-                    <tr>
-                        <th>SEQ</th><th class="group-end">BUNO</th>
-                        <th class="group-end">E&E ORDER</th>
-                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th class="group-end">REPAIR ID</th>
-                        <th class="group-end">T/M/S</th>
-                        <th>WING S/N</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-t44"></tbody>
-            </table>
-        </div>
+        <!-- T-44c Section -->
+        <section class="data-section">
+            <div class="section-accent accent-t44"></div>
+            <div class="section-header">
+                <span class="section-badge badge-t44">T-44c</span>
+                <span class="section-label">Multi-Engine</span>
+            </div>
+            <div class="table-scroll">
+                <table id="table-t44">
+                    <thead>
+                        <tr>
+                            <th>SEQ</th><th class="group-end">BUNO</th>
+                            <th class="group-end">E&amp;E ORDER</th>
+                            <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                            <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+                            <th class="group-end">REPAIR ID</th>
+                            <th class="group-end">T/M/S</th>
+                            <th>WING S/N</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-t44"></tbody>
+                </table>
+            </div>
+        </section>
 
-    </div>
+    </main>
 
+    <!-- ==================== Application Logic ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -303,7 +932,7 @@
         const loginForm = document.getElementById("loginForm");
         const loginError = document.getElementById("loginError");
         const toast = document.getElementById("toast");
-        
+
         // Table Elements
         const orderForm = document.getElementById("orderForm");
         const tbodyT6Usn = document.getElementById("tbody-t6-usn");
@@ -314,9 +943,7 @@
         function getTextWithoutButton(cell) {
             let text = "";
             for (let node of cell.childNodes) {
-                if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('delete-btn')) {
-                    continue;
-                }
+                if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('delete-btn')) continue;
                 text += node.textContent;
             }
             return text.trim();
@@ -325,9 +952,7 @@
         function showToast(message) {
             toast.innerText = message;
             toast.classList.add("show");
-            setTimeout(() => {
-                toast.classList.remove("show");
-            }, 2000); 
+            setTimeout(() => toast.classList.remove("show"), 2000);
         }
 
         // --- MODAL LOGIC ---
@@ -341,7 +966,7 @@
         });
 
         window.addEventListener("click", (e) => {
-            if (e.target == loginModal) {
+            if (e.target === loginModal || e.target.classList.contains('modal-overlay')) {
                 loginModal.style.display = "none";
             }
         });
@@ -351,7 +976,7 @@
             if (user) {
                 body.classList.remove("logged-out");
                 body.classList.add("logged-in");
-                loginModal.style.display = "none"; 
+                loginModal.style.display = "none";
             } else {
                 body.classList.remove("logged-in");
                 body.classList.add("logged-out");
@@ -362,10 +987,8 @@
             e.preventDefault();
             const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value;
-            
-            // Appending the fake domain to satisfy Firebase
             const fakeEmail = username + "@frcse.local";
-            
+
             signInWithEmailAndPassword(auth, fakeEmail, password)
                 .then(() => {
                     loginForm.reset();
@@ -377,23 +1000,21 @@
                 });
         });
 
-        logoutBtn.addEventListener("click", () => {
-            signOut(auth);
-        });
+        logoutBtn.addEventListener("click", () => signOut(auth));
 
         // --- DATABASE LOGIC ---
         async function loadData() {
             tbodyT6Usn.innerHTML = "";
             tbodyUsaf.innerHTML = "";
             tbodyT44.innerHTML = "";
-            
+
             try {
                 const querySnapshot = await getDocs(entriesCollection);
                 let allEntries = [];
-                
+
                 querySnapshot.forEach((documentSnapshot) => {
                     let data = documentSnapshot.data();
-                    data.id = documentSnapshot.id; 
+                    data.id = documentSnapshot.id;
                     allEntries.push(data);
                 });
 
@@ -406,7 +1027,7 @@
                 allEntries.forEach((data) => {
                     const row = document.createElement("tr");
                     row.setAttribute("data-id", data.id);
-                    
+
                     row.innerHTML = `
                         <td class="editable-cell" data-field="seq">${data.seq || ''}</td>
                         <td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
@@ -419,7 +1040,7 @@
                         <td class="group-end editable-cell" data-field="tms">${data.tms || ''}</td>
                         <td class="relative-cell editable-cell" data-field="wingSn">
                             ${data.wingSn || ''}
-                            <button class="delete-btn admin-only" data-id="${data.id}">X</button>
+                            <button class="delete-btn admin-only" data-id="${data.id}">✕</button>
                         </td>
                     `;
 
@@ -430,12 +1051,12 @@
 
                 document.querySelectorAll(".delete-btn").forEach(button => {
                     button.addEventListener("click", async (e) => {
-                        e.stopPropagation(); 
+                        e.stopPropagation();
                         const docId = e.target.getAttribute("data-id");
                         if (confirm("Are you sure you want to delete this row?")) {
                             try {
                                 await deleteDoc(doc(db, "workOrders", docId));
-                                loadData(); 
+                                loadData();
                             } catch (error) {
                                 console.error("Error deleting doc:", error);
                                 alert("Error deleting row. Check console.");
@@ -452,45 +1073,36 @@
         // --- INLINE EDITING & CLIPBOARD LOGIC ---
         document.getElementById("appContainer").addEventListener("click", (e) => {
             const cell = e.target.closest(".editable-cell");
-            
             if (!cell || e.target.classList.contains('delete-btn')) return;
 
             if (body.classList.contains("logged-in")) {
                 cell.contentEditable = "true";
                 cell.focus();
             } else {
-                const text = getTextWithoutButton(cell); 
+                const text = getTextWithoutButton(cell);
                 if (text) {
                     navigator.clipboard.writeText(text).then(() => {
                         cell.classList.add("copied-flash");
                         showToast(`Copied: ${text}`);
-                        setTimeout(() => {
-                            cell.classList.remove("copied-flash");
-                        }, 1000); 
-                    }).catch(err => {
-                        console.error('Failed to copy text: ', err);
-                    });
+                        setTimeout(() => cell.classList.remove("copied-flash"), 1000);
+                    }).catch(err => console.error('Failed to copy text: ', err));
                 }
             }
         });
 
         document.getElementById("appContainer").addEventListener("focusout", async (e) => {
             const cell = e.target.closest(".editable-cell");
-            
             if (!cell || !body.classList.contains("logged-in") || cell.contentEditable !== "true") return;
-            
+
             cell.contentEditable = "false";
-            
-            const newValue = getTextWithoutButton(cell); 
+            const newValue = getTextWithoutButton(cell);
             const fieldName = cell.getAttribute("data-field");
             const docId = cell.closest("tr").getAttribute("data-id");
-            
+
             if (docId && fieldName) {
                 try {
                     const docRef = doc(db, "workOrders", docId);
-                    await updateDoc(docRef, {
-                        [fieldName]: newValue
-                    });
+                    await updateDoc(docRef, { [fieldName]: newValue });
                 } catch (error) {
                     console.error("Error updating document: ", error);
                     alert("Failed to save edit to database.");
@@ -501,15 +1113,15 @@
         document.getElementById("appContainer").addEventListener("keydown", (e) => {
             const cell = e.target.closest(".editable-cell");
             if (cell && cell.contentEditable === "true" && e.key === "Enter") {
-                e.preventDefault(); 
-                cell.blur(); 
+                e.preventDefault();
+                cell.blur();
             }
         });
 
         // Handle Add New Entry Form
         orderForm.addEventListener("submit", async (e) => {
-            e.preventDefault(); 
-            
+            e.preventDefault();
+
             const newEntry = {
                 aircraftType: document.getElementById("aircraftType").value,
                 seq: document.getElementById("seq").value,
@@ -527,8 +1139,8 @@
 
             try {
                 await addDoc(entriesCollection, newEntry);
-                orderForm.reset(); 
-                loadData(); 
+                orderForm.reset();
+                loadData();
             } catch (error) {
                 console.error("Error adding document: ", error);
                 alert("Failed to save new entry to database.");
