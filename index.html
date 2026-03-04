@@ -9,7 +9,7 @@
             font-family: sans-serif; 
             margin: 20px; 
             background-color: #f4f4f4;
-            overflow-x: hidden; /* Prevents scrollbar when toast slides in */
+            overflow-x: hidden; 
         }
         
         /* Top Navigation/Controls */
@@ -48,7 +48,7 @@
         .modal {
             display: none; 
             position: fixed; 
-            z-index: 100; /* Ensure it is above table contents */
+            z-index: 100; 
             left: 0; 
             top: 0; 
             width: 100%; 
@@ -116,7 +116,6 @@
         body.logged-out .editable-cell:hover {
             background-color: #f0f0f0;
         }
-        /* Green flash animation for copying */
         .copied-flash {
             background-color: #a8e6cf !important;
             transition: background-color 0.2s ease-out;
@@ -134,7 +133,7 @@
             background-color: #ff4d4d;
             padding: 4px 8px;
             border-radius: 3px;
-            z-index: 10; /* Ensures it clicks before parent cell */
+            z-index: 10; 
         }
         .delete-btn:hover { background-color: #cc0000; }
         
@@ -157,7 +156,7 @@
         #toast {
             position: fixed;
             bottom: 20px;
-            right: -300px; /* Hidden off-screen by default */
+            right: -300px; 
             background-color: #333;
             color: #fff;
             padding: 12px 24px;
@@ -168,7 +167,7 @@
             z-index: 1000;
         }
         #toast.show {
-            right: 20px; /* Slides in */
+            right: 20px; 
         }
     </style>
 </head>
@@ -186,10 +185,10 @@
             <span class="close-btn" id="closeModal">&times;</span>
             <h3>Authorized Access</h3>
             <form id="loginForm">
-                <input type="email" id="email" placeholder="Email" required style="width: 90%; box-sizing: border-box;"><br>
+                <input type="text" id="username" placeholder="Username" required style="width: 90%; box-sizing: border-box;"><br>
                 <input type="password" id="password" placeholder="Password" required style="width: 90%; box-sizing: border-box;"><br>
                 <button type="submit" style="width: 90%;">Log In</button>
-                <div id="loginError">Invalid email or password.</div>
+                <div id="loginError">Invalid username or password.</div>
             </form>
         </div>
     </div>
@@ -312,11 +311,9 @@
         const tbodyT44 = document.getElementById("tbody-t44");
 
         // --- UTILITY FUNCTIONS ---
-        // Helper to extract text from a cell without grabbing the 'X' button text
         function getTextWithoutButton(cell) {
             let text = "";
             for (let node of cell.childNodes) {
-                // Ignore the button element when calculating inner text
                 if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('delete-btn')) {
                     continue;
                 }
@@ -363,10 +360,13 @@
 
         loginForm.addEventListener("submit", (e) => {
             e.preventDefault();
-            const email = document.getElementById("email").value;
+            const username = document.getElementById("username").value.trim();
             const password = document.getElementById("password").value;
             
-            signInWithEmailAndPassword(auth, email, password)
+            // Appending the fake domain to satisfy Firebase
+            const fakeEmail = username + "@frcse.local";
+            
+            signInWithEmailAndPassword(auth, fakeEmail, password)
                 .then(() => {
                     loginForm.reset();
                     loginError.style.display = "none";
@@ -407,9 +407,6 @@
                     const row = document.createElement("tr");
                     row.setAttribute("data-id", data.id);
                     
-                    // !!! FIX APPLIED HERE !!!
-                    // We moved 'editable-cell' to the outer TD, so the entire cell highlights.
-                    // Previously it was on an inner span.
                     row.innerHTML = `
                         <td class="editable-cell" data-field="seq">${data.seq || ''}</td>
                         <td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
@@ -431,16 +428,14 @@
                     else if (data.aircraftType === "T-44c") tbodyT44.appendChild(row);
                 });
 
-                // Attach delete logic
                 document.querySelectorAll(".delete-btn").forEach(button => {
                     button.addEventListener("click", async (e) => {
-                        // Prevent the click from triggering parent cell events (green flash/edit)
                         e.stopPropagation(); 
                         const docId = e.target.getAttribute("data-id");
                         if (confirm("Are you sure you want to delete this row?")) {
                             try {
                                 await deleteDoc(doc(db, "workOrders", docId));
-                                loadData(); // Reload tables
+                                loadData(); 
                             } catch (error) {
                                 console.error("Error deleting doc:", error);
                                 alert("Error deleting row. Check console.");
@@ -458,19 +453,12 @@
         document.getElementById("appContainer").addEventListener("click", (e) => {
             const cell = e.target.closest(".editable-cell");
             
-            // Safety checks: stop if not an interactive cell, or if clicking the delete button
             if (!cell || e.target.classList.contains('delete-btn')) return;
 
             if (body.classList.contains("logged-in")) {
-                // EDIT MODE
                 cell.contentEditable = "true";
                 cell.focus();
-                
-                // When editing the Wing S/N cell, we must ensure we don't accidentally
-                // delete the absolute-positioned 'X' button from the DOM. Standard contentEditable
-                // handling of inner elements is complex; for now, we trust the user.
             } else {
-                // VIEW MODE: Copy to Clipboard
                 const text = getTextWithoutButton(cell); 
                 if (text) {
                     navigator.clipboard.writeText(text).then(() => {
@@ -486,16 +474,13 @@
             }
         });
 
-        // Save data to Firebase when an edited cell loses focus
         document.getElementById("appContainer").addEventListener("focusout", async (e) => {
             const cell = e.target.closest(".editable-cell");
             
-            // Stop if not a cell, not logged in, or already not editable
             if (!cell || !body.classList.contains("logged-in") || cell.contentEditable !== "true") return;
             
             cell.contentEditable = "false";
             
-            // Use our helper to ignore the button text node
             const newValue = getTextWithoutButton(cell); 
             const fieldName = cell.getAttribute("data-field");
             const docId = cell.closest("tr").getAttribute("data-id");
@@ -506,21 +491,18 @@
                     await updateDoc(docRef, {
                         [fieldName]: newValue
                     });
-                    // Data is updated on backend. No need to full loadData() which disrupts flow.
                 } catch (error) {
                     console.error("Error updating document: ", error);
                     alert("Failed to save edit to database.");
-                    // Optional: revert cell text to previous state by reloadData()
                 }
             }
         });
 
-        // Prevent pressing 'Enter' in an editable cell from creating line breaks; trigger save instead.
         document.getElementById("appContainer").addEventListener("keydown", (e) => {
             const cell = e.target.closest(".editable-cell");
             if (cell && cell.contentEditable === "true" && e.key === "Enter") {
                 e.preventDefault(); 
-                cell.blur(); // Trigger focusout save event
+                cell.blur(); 
             }
         });
 
@@ -553,7 +535,6 @@
             }
         });
 
-        // Fire initial load
         loadData();
     </script>
 </body>
