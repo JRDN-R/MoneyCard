@@ -9,6 +9,7 @@
             font-family: sans-serif; 
             margin: 20px; 
             background-color: #f4f4f4;
+            overflow-x: hidden; /* Prevents scrollbar when toast slides in */
         }
         
         /* Top Navigation/Controls */
@@ -43,9 +44,9 @@
             border: 1px solid #ccc;
         }
         
-        /* Login Modal (Popup) */
+        /* Login Modal */
         .modal {
-            display: none; /* Hidden by default */
+            display: none; 
             position: fixed; 
             z-index: 10; 
             left: 0; 
@@ -81,7 +82,6 @@
 
         /* Table Structure */
         .table-wrapper {
-            /* Adds padding on the right so floating buttons don't cause horizontal scrolling */
             padding-right: 50px; 
             margin-bottom: 30px;
         }
@@ -103,13 +103,32 @@
         tbody tr:nth-child(odd) { background-color: #ffffff; }
         th.group-end, td.group-end { border-right: 3px solid #000; }
         
-        /* Floating Delete Button Logic */
+        /* Interactive Cells */
+        body.logged-in .editable-cell:hover {
+            outline: 2px dashed #0056b3;
+            outline-offset: -2px;
+            cursor: text;
+            background-color: #e6f2ff;
+        }
+        body.logged-out .editable-cell {
+            cursor: pointer;
+        }
+        body.logged-out .editable-cell:hover {
+            background-color: #f0f0f0;
+        }
+        /* Green flash animation for copying */
+        .copied-flash {
+            background-color: #a8e6cf !important;
+            transition: background-color 0.2s ease-out;
+        }
+
+        /* Floating Delete Button */
         .relative-cell {
-            position: relative; /* Allows absolute positioning inside this cell */
+            position: relative; 
         }
         .delete-btn {
             position: absolute;
-            right: -35px; /* Floats it right outside the table border */
+            right: -35px; 
             top: 50%;
             transform: translateY(-50%);
             background-color: #ff4d4d;
@@ -132,9 +151,29 @@
         .banner-t6-usn { background-color: #e6b800; color: #000; }
         .banner-usaf { background-color: #5c9999; }
         .banner-t44 { background-color: #996633; }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: -300px; /* Hidden off-screen by default */
+            background-color: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: right 0.4s ease-in-out;
+            z-index: 1000;
+        }
+        #toast.show {
+            right: 20px; /* Slides in */
+        }
     </style>
 </head>
 <body class="logged-out">
+
+    <div id="toast">Copied!</div>
 
     <div class="top-controls">
         <button id="editBtn" class="public-only">Edit</button>
@@ -192,7 +231,7 @@
                         <th class="group-end">REPAIR ID</th>
                         <th class="group-end">T/M/S</th>
                         <th>WING S/N</th>
-                        </tr>
+                    </tr>
                 </thead>
                 <tbody id="tbody-t6-usn"></tbody>
             </table>
@@ -238,7 +277,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        // Added updateDoc to allow inline editing
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -263,12 +303,22 @@
         const closeModal = document.getElementById("closeModal");
         const loginForm = document.getElementById("loginForm");
         const loginError = document.getElementById("loginError");
+        const toast = document.getElementById("toast");
         
         // Table Elements
         const orderForm = document.getElementById("orderForm");
         const tbodyT6Usn = document.getElementById("tbody-t6-usn");
         const tbodyUsaf = document.getElementById("tbody-usaf");
         const tbodyT44 = document.getElementById("tbody-t44");
+
+        // --- TOAST NOTIFICATION LOGIC ---
+        function showToast(message) {
+            toast.innerText = message;
+            toast.classList.add("show");
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 2000); // Hides after 2 seconds
+        }
 
         // --- MODAL LOGIC ---
         editBtn.addEventListener("click", () => {
@@ -280,7 +330,6 @@
             loginModal.style.display = "none";
         });
 
-        // Close modal if user clicks outside of the content box
         window.addEventListener("click", (e) => {
             if (e.target == loginModal) {
                 loginModal.style.display = "none";
@@ -290,12 +339,10 @@
         // --- AUTHENTICATION LOGIC ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Logged in: toggle body classes to show admin controls
                 body.classList.remove("logged-out");
                 body.classList.add("logged-in");
                 loginModal.style.display = "none"; 
             } else {
-                // Logged out: hide admin controls
                 body.classList.remove("logged-in");
                 body.classList.add("logged-out");
             }
@@ -322,7 +369,6 @@
         });
 
         // --- DATABASE LOGIC ---
-        // Data loads for EVERYONE immediately, regardless of login state
         async function loadData() {
             tbodyT6Usn.innerHTML = "";
             tbodyUsaf.innerHTML = "";
@@ -346,21 +392,21 @@
 
                 allEntries.forEach((data) => {
                     const row = document.createElement("tr");
+                    // We store the unique doc ID on the row so editable cells know which document to update
+                    row.setAttribute("data-id", data.id);
                     
-                    // The last <td> has 'relative-cell' so the button can float outside it.
-                    // The button has 'admin-only' class so it hides when logged out.
                     row.innerHTML = `
-                        <td>${data.seq || ''}</td>
-                        <td class="group-end">${data.buno || ''}</td>
-                        <td class="group-end">${data.eeOrder || ''}</td>
-                        <td>${data.salesOrder || ''}</td>
-                        <td class="group-end">${data.projectNo1 || ''}</td>
-                        <td>${data.kitsOrder || ''}</td>
-                        <td class="group-end">${data.projectNo2 || ''}</td>
-                        <td class="group-end">${data.repairId || ''}</td>
-                        <td class="group-end">${data.tms || ''}</td>
+                        <td class="editable-cell" data-field="seq">${data.seq || ''}</td>
+                        <td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
+                        <td class="group-end editable-cell" data-field="eeOrder">${data.eeOrder || ''}</td>
+                        <td class="editable-cell" data-field="salesOrder">${data.salesOrder || ''}</td>
+                        <td class="group-end editable-cell" data-field="projectNo1">${data.projectNo1 || ''}</td>
+                        <td class="editable-cell" data-field="kitsOrder">${data.kitsOrder || ''}</td>
+                        <td class="group-end editable-cell" data-field="projectNo2">${data.projectNo2 || ''}</td>
+                        <td class="group-end editable-cell" data-field="repairId">${data.repairId || ''}</td>
+                        <td class="group-end editable-cell" data-field="tms">${data.tms || ''}</td>
                         <td class="relative-cell">
-                            ${data.wingSn || ''}
+                            <span class="editable-cell" data-field="wingSn">${data.wingSn || ''}</span>
                             <button class="delete-btn admin-only" data-id="${data.id}">X</button>
                         </td>
                     `;
@@ -370,6 +416,7 @@
                     else if (data.aircraftType === "T-44c") tbodyT44.appendChild(row);
                 });
 
+                // Attach delete logic
                 document.querySelectorAll(".delete-btn").forEach(button => {
                     button.addEventListener("click", async (e) => {
                         const docId = e.target.getAttribute("data-id");
@@ -385,6 +432,67 @@
             }
         }
 
+        // --- INLINE EDITING & CLIPBOARD LOGIC ---
+        // We use event delegation on the tables container to handle all cells efficiently
+        document.getElementById("appContainer").addEventListener("click", (e) => {
+            const cell = e.target.closest(".editable-cell");
+            if (!cell) return;
+
+            if (body.classList.contains("logged-in")) {
+                // EDIT MODE
+                cell.contentEditable = "true";
+                cell.focus();
+            } else {
+                // VIEW MODE: Copy to Clipboard
+                const text = cell.innerText.trim();
+                if (text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        cell.classList.add("copied-flash");
+                        showToast(`Copied: ${text}`);
+                        setTimeout(() => {
+                            cell.classList.remove("copied-flash");
+                        }, 1000); // Removes green flash after 1 second
+                    }).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+                }
+            }
+        });
+
+        // Save data to Firebase when an edited cell loses focus
+        document.getElementById("appContainer").addEventListener("focusout", async (e) => {
+            const cell = e.target.closest(".editable-cell");
+            if (!cell || !body.classList.contains("logged-in")) return;
+            
+            cell.contentEditable = "false";
+            
+            const newValue = cell.innerText.trim();
+            const fieldName = cell.getAttribute("data-field");
+            const docId = cell.closest("tr").getAttribute("data-id");
+            
+            if (docId && fieldName) {
+                try {
+                    const docRef = doc(db, "workOrders", docId);
+                    await updateDoc(docRef, {
+                        [fieldName]: newValue
+                    });
+                } catch (error) {
+                    console.error("Error updating document: ", error);
+                    alert("Failed to save edit.");
+                }
+            }
+        });
+
+        // Allow pressing 'Enter' to quickly save and unfocus the cell
+        document.getElementById("appContainer").addEventListener("keydown", (e) => {
+            const cell = e.target.closest(".editable-cell");
+            if (cell && e.key === "Enter") {
+                e.preventDefault(); // Prevents line breaks in the cell
+                cell.blur(); // Triggers the focusout save event above
+            }
+        });
+
+        // Handle Add New Entry Form
         orderForm.addEventListener("submit", async (e) => {
             e.preventDefault(); 
             
@@ -413,7 +521,7 @@
             }
         });
 
-        // Fire loadData immediately so the public can see the table
+        // Fire initial load
         loadData();
     </script>
 </body>
