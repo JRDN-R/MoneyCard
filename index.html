@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -700,7 +701,7 @@
             <div class="header-actions">
                 <span class="admin-badge admin-only">Admin Mode</span>
 
-                <!-- Export PDF -->
+                <!-- Export PDF — always visible -->
                 <button id="exportBtn" class="btn btn-outline">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
@@ -824,19 +825,6 @@
                         </button>
                     </div>
                 </form>
-
-                <!-- ============================================================
-                     TEMPORARY SEED BUTTON — delete this block after importing
-                     ============================================================ -->
-                <div class="form-actions admin-only" id="seedSection" style="border-top:2px dashed var(--danger);margin-top:16px;padding-top:16px;justify-content:space-between;align-items:center;">
-                    <span style="font-size:0.8rem;color:var(--text-muted);">One-time bulk import (16 T-6 USN records)</span>
-                    <button type="button" id="seedBtn" class="btn btn-outline" style="border-color:var(--danger);color:var(--danger);">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M12 5v14M5 12h14"/></svg>
-                        Import 16 Seed Records
-                    </button>
-                </div>
-                <!-- END TEMPORARY SEED BUTTON -->
-
             </div>
         </div>
 
@@ -914,7 +902,7 @@
     <!-- ==================== Application Logic ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -1117,59 +1105,16 @@
         });
 
         // =============================================
-        //  TEMPORARY BULK SEED — delete after use
-        // =============================================
-        const seedData = [
-            { aircraftType:"T-6 USN", seq:"6C92", buno:"166232", eeOrder:"58519323", salesOrder:"58518766", projectNo1:"1000002009218", kitsOrder:"58519821", projectNo2:"1000001888722", repairId:"9008065709", tms:"T6B", wingSn:"PN-223" },
-            { aircraftType:"T-6 USN", seq:"6C91", buno:"166234", eeOrder:"58515859", salesOrder:"58505454", projectNo1:"1000002009217", kitsOrder:"58519804", projectNo2:"1000001888721", repairId:"9008057146", tms:"T6B", wingSn:"PN-225" },
-            { aircraftType:"T-6 USN", seq:"6C90", buno:"166230", eeOrder:"58498192", salesOrder:"58492296", projectNo1:"1000002006078", kitsOrder:"58499360", projectNo2:"1000001888719", repairId:"9008055331", tms:"T6B", wingSn:"PN-221" },
-            { aircraftType:"T-6 USN", seq:"6C89", buno:"166231", eeOrder:"58478411", salesOrder:"58470030", projectNo1:"1000001977802", kitsOrder:"58499352", projectNo2:"1000001888718", repairId:"9008038710", tms:"T6B", wingSn:"PN-222" },
-            { aircraftType:"T-6 USN", seq:"6C88", buno:"165961", eeOrder:"58429294", salesOrder:"58426941", projectNo1:"1000001954004", kitsOrder:"58429077", projectNo2:"1000001888714", repairId:"9008006297", tms:"T6A", wingSn:"PT-104" },
-            { aircraftType:"T-6 USN", seq:"6C87", buno:"166239", eeOrder:"58378896", salesOrder:"58376936", projectNo1:"1000001916962", kitsOrder:"58381676", projectNo2:"1000001888713", repairId:"9007971704", tms:"T6B", wingSn:"PN-230" },
-            { aircraftType:"T-6 USN", seq:"6C86", buno:"166235", eeOrder:"58378766", salesOrder:"58373996", projectNo1:"1000001916898", kitsOrder:"58381645", projectNo2:"1000001888712", repairId:"9007971667", tms:"T6B", wingSn:"PN-226" },
-            { aircraftType:"T-6 USN", seq:"6C85", buno:"166233", eeOrder:"58368859", salesOrder:"58360111", projectNo1:"1000001914855", kitsOrder:"58381633", projectNo2:"1000001888711", repairId:"9007970184", tms:"T6B", wingSn:"PN-224" },
-            { aircraftType:"T-6 USN", seq:"6C84", buno:"165999", eeOrder:"58359213", salesOrder:"58353935", projectNo1:"1000001905579", kitsOrder:"58357144", projectNo2:"1000001888708", repairId:"9007969328", tms:"T6A", wingSn:"PN-214" },
-            { aircraftType:"T-6 USN", seq:"6C83", buno:"166225", eeOrder:"58229378", salesOrder:"58225957", projectNo1:"1000001811909", kitsOrder:"58245898", projectNo2:"1000001830108", repairId:"9007907669", tms:"T6B", wingSn:"PN-216" },
-            { aircraftType:"T-6 USN", seq:"6C82", buno:"166236", eeOrder:"58354465", salesOrder:"58325787", projectNo1:"1000001868163", kitsOrder:"58357116", projectNo2:"1000001888707", repairId:"9007948907", tms:"T6B", wingSn:"PN-227" },
-            { aircraftType:"T-6 USN", seq:"6C81", buno:"166216", eeOrder:"58200206", salesOrder:"58188014", projectNo1:"1000001811911", kitsOrder:"58188140", projectNo2:"1000001675532", repairId:"9007893776", tms:"T6B", wingSn:"PN-207" },
-            { aircraftType:"T-6 USN", seq:"6C80", buno:"166229", eeOrder:"58171194", salesOrder:"58162067", projectNo1:"1000001806328", kitsOrder:"58171536", projectNo2:"1000001675528", repairId:"9007889531", tms:"T6B", wingSn:"PN-220" },
-            { aircraftType:"T-6 USN", seq:"6C79", buno:"166222", eeOrder:"58178744", salesOrder:"58167111", projectNo1:"1000001809289", kitsOrder:"58175122", projectNo2:"1000001675529", repairId:"9007890546", tms:"T6B", wingSn:"PN9002" },
-            { aircraftType:"T-6 USN", seq:"6C78", buno:"166010", eeOrder:"58150117", salesOrder:"58148694", projectNo1:"1000001803935", kitsOrder:"58158135", projectNo2:"1000001675526", repairId:"9007886086", tms:"T6B", wingSn:"PN-001" },
-            { aircraftType:"T-6 USN", seq:"6C77", buno:"166227", eeOrder:"58141495", salesOrder:"58140422", projectNo1:"1000001801494", kitsOrder:"58158134", projectNo2:"1000001675525", repairId:"9007884622", tms:"T6B", wingSn:"PN-218" },
-        ];
-
-        document.getElementById("seedBtn").addEventListener("click", async () => {
-            if (!confirm(`This will write ${seedData.length} new records to Firestore.\n\nContinue?`)) return;
-
-            const seedBtn = document.getElementById("seedBtn");
-            seedBtn.disabled = true;
-            seedBtn.textContent = "Importing…";
-
-            try {
-                const batch = writeBatch(db);
-                seedData.forEach((entry) => {
-                    const ref = doc(collection(db, "workOrders"));
-                    batch.set(ref, { ...entry, timestamp: new Date() });
-                });
-                await batch.commit();
-                showToast(`✓ ${seedData.length} records imported`);
-                loadData();
-            } catch (err) {
-                console.error("Seed failed:", err);
-                alert("Import failed — check console.");
-            } finally {
-                seedBtn.disabled = false;
-                seedBtn.textContent = "Import 16 Seed Records";
-            }
-        });
-
-        // =============================================
         //  PDF EXPORT
         // =============================================
 
+        /**
+         *  Render the brand-icon SVG onto a hidden <canvas>
+         *  and return a PNG data-URL for embedding in the PDF.
+         */
         function createLogoDataURL() {
             return new Promise((resolve) => {
-                const s = 160;
+                const s = 160;                             // render at 2× for crispness
                 const canvas = document.createElement('canvas');
                 canvas.width = s;
                 canvas.height = s;
@@ -1204,12 +1149,17 @@
                 };
                 img.onerror = () => {
                     URL.revokeObjectURL(url);
-                    resolve(null);
+                    resolve(null);                         // graceful fallback
                 };
                 img.src = url;
             });
         }
 
+        /**
+         *  Scrape visible rows from a <tbody> element and return
+         *  an array-of-arrays (one sub-array per row), stripping
+         *  the delete-button text from the last cell.
+         */
         function scrapeTableBody(tbodyEl) {
             const rows = [];
             tbodyEl.querySelectorAll('tr').forEach(tr => {
@@ -1231,6 +1181,7 @@
 
             const { jsPDF } = window.jspdf;
 
+            /* ---------- page geometry (letter = 8.5 × 11 in) ---------- */
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
             const pageW  = 215.9;
             const pageH  = 279.4;
@@ -1238,15 +1189,18 @@
             const contentW = pageW - margin * 2;
             let y = margin;
 
+            /* ---------- logo ---------- */
             const logoDataURL = await createLogoDataURL();
             const logoSize = 9;
             if (logoDataURL) {
                 doc.addImage(logoDataURL, 'PNG', margin, y, logoSize, logoSize);
             } else {
+                // fallback: draw a solid-blue rounded rect
                 doc.setFillColor(59, 130, 246);
                 doc.roundedRect(margin, y, logoSize, logoSize, 2, 2, 'F');
             }
 
+            /* ---------- header text (left) ---------- */
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(16);
             doc.setTextColor(15, 23, 42);
@@ -1257,6 +1211,7 @@
             doc.setTextColor(148, 163, 184);
             doc.text('TRAINERS E&E 62911', margin + logoSize + 4, y + 8.5);
 
+            /* ---------- header date (right) ---------- */
             const now = new Date();
             const dateStr = now.toLocaleDateString('en-US', {
                 year: 'numeric', month: 'long', day: 'numeric'
@@ -1268,15 +1223,17 @@
 
             y += logoSize + 5;
 
+            /* ---------- divider ---------- */
             doc.setDrawColor(210, 218, 226);
             doc.setLineWidth(0.4);
             doc.line(margin, y, pageW - margin, y);
             y += 6;
 
+            /* ---------- section definitions ---------- */
             const sections = [
-                { name: 'T-6 A/B',  sub: 'Navy',         color: [202, 138, 4],  tbodyId: 'tbody-t6-usn' },
-                { name: 'T-6 A',    sub: 'Air Force',     color: [8, 145, 178],  tbodyId: 'tbody-usaf'   },
-                { name: 'T-44 C',   sub: 'Multi-Engine',  color: [109, 40, 217], tbodyId: 'tbody-t44'    },
+                { name: 'T-6 A/B',       sub: 'Navy',         color: [202, 138, 4],  tbodyId: 'tbody-t6-usn' },
+                { name: 'T-6 A',  sub: 'Air Force',    color: [8, 145, 178],  tbodyId: 'tbody-usaf'   },
+                { name: 'T-44 C',          sub: 'Multi-Engine', color: [109, 40, 217], tbodyId: 'tbody-t44'    },
             ];
 
             const colHeaders = [
@@ -1285,13 +1242,17 @@
                 'REPAIR ID', 'T/M/S', 'WING S/N'
             ];
 
+            /* ---------- iterate sections ---------- */
             for (const sec of sections) {
 
+                // page-break guard
                 if (y > pageH - 40) { doc.addPage(); y = margin; }
 
+                // coloured accent bar
                 doc.setFillColor(...sec.color);
                 doc.roundedRect(margin, y, 3, 5, 1, 1, 'F');
 
+                // section title
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(10);
                 doc.setTextColor(15, 23, 42);
@@ -1305,6 +1266,7 @@
 
                 y += 9;
 
+                // table body data
                 const rows = scrapeTableBody(document.getElementById(sec.tbodyId));
 
                 if (rows.length === 0) {
@@ -1352,6 +1314,7 @@
                 }
             }
 
+            /* ---------- save ---------- */
             const pad = (n) => String(n).padStart(2, '0');
             const fName = `MoneyCard_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.pdf`;
             doc.save(fName);
