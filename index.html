@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +6,7 @@
     <title>MoneyCard — TRAINERS E&amp;E 62911</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- PDF Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
@@ -1114,7 +1113,7 @@
          */
         function createLogoDataURL() {
             return new Promise((resolve) => {
-                const s = 160;                             // render at 2× for crispness
+                const s = 160;
                 const canvas = document.createElement('canvas');
                 canvas.width = s;
                 canvas.height = s;
@@ -1149,7 +1148,7 @@
                 };
                 img.onerror = () => {
                     URL.revokeObjectURL(url);
-                    resolve(null);                         // graceful fallback
+                    resolve(null);
                 };
                 img.src = url;
             });
@@ -1177,63 +1176,95 @@
             return rows;
         }
 
+        /**
+         *  Fetch a TTF font file and return it as a base-64 string
+         *  suitable for jsPDF's addFileToVFS.
+         */
+        async function fetchFontBase64(url) {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`Font fetch ${resp.status}`);
+            const buf  = await resp.arrayBuffer();
+            const bytes = new Uint8Array(buf);
+            let bin = '';
+            for (let i = 0; i < bytes.length; i += 8192) {
+                bin += String.fromCharCode.apply(
+                    null, bytes.subarray(i, Math.min(i + 8192, bytes.length))
+                );
+            }
+            return btoa(bin);
+        }
+
         async function exportPDF() {
 
             const { jsPDF } = window.jspdf;
 
             /* ---------- page geometry (letter = 8.5 × 11 in) ---------- */
-            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-            const pageW  = 215.9;
-            const pageH  = 279.4;
+            const pdfDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+            const pageW   = 215.9;
+            const pageH   = 279.4;
             const margin  = 12;
             const contentW = pageW - margin * 2;
             let y = margin;
 
-            /* ---------- logo ---------- */
-            const logoDataURL = await createLogoDataURL();
-            const logoSize = 9;
-            if (logoDataURL) {
-                doc.addImage(logoDataURL, 'PNG', margin, y, logoSize, logoSize);
-            } else {
-                // fallback: draw a solid-blue rounded rect
-                doc.setFillColor(59, 130, 246);
-                doc.roundedRect(margin, y, logoSize, logoSize, 2, 2, 'F');
+            const pad = (n) => String(n).padStart(2, '0');
+            const now = new Date();
+
+            /* ---------- load Anonymous Pro into jsPDF ---------- */
+            let hasAnonPro = false;
+            try {
+                const b64 = await fetchFontBase64(
+                    'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anonymouspro/AnonymousPro-Regular.ttf'
+                );
+                pdfDoc.addFileToVFS('AnonymousPro-Regular.ttf', b64);
+                pdfDoc.addFont('AnonymousPro-Regular.ttf', 'AnonymousPro', 'normal');
+                hasAnonPro = true;
+            } catch (e) {
+                console.warn('Anonymous Pro unavailable for PDF; using Courier fallback.', e);
             }
 
-            /* ---------- header text (left) ---------- */
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(16);
-            doc.setTextColor(15, 23, 42);
-            doc.text('MoneyCard', margin + logoSize + 4, y + 4.5);
+            const dataFont = hasAnonPro ? 'AnonymousPro' : 'courier';
 
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7);
-            doc.setTextColor(148, 163, 184);
-            doc.text('TRAINERS E&E 62911', margin + logoSize + 4, y + 8.5);
+            /* ---------- logo (shrunk — was 9 mm) ---------- */
+            const logoDataURL = await createLogoDataURL();
+            const logoSize = 5;
+            if (logoDataURL) {
+                pdfDoc.addImage(logoDataURL, 'PNG', margin, y, logoSize, logoSize);
+            } else {
+                pdfDoc.setFillColor(59, 130, 246);
+                pdfDoc.roundedRect(margin, y, logoSize, logoSize, 1.2, 1.2, 'F');
+            }
 
-            /* ---------- header date (right) ---------- */
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            });
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(100, 116, 139);
-            doc.text(dateStr, pageW - margin, y + 5, { align: 'right' });
+            /* ---------- header text — under half original size ---------- */
+            pdfDoc.setFont('helvetica', 'bold');
+            pdfDoc.setFontSize(7);                       // was 16
+            pdfDoc.setTextColor(15, 23, 42);
+            pdfDoc.text('MoneyCard', margin + logoSize + 2.5, y + 2.3);
 
-            y += logoSize + 5;
+            pdfDoc.setFont('helvetica', 'normal');
+            pdfDoc.setFontSize(3);                       // was 7
+            pdfDoc.setTextColor(148, 163, 184);
+            pdfDoc.text('TRAINERS E&E 62911', margin + logoSize + 2.5, y + 4.3);
+
+            /* ---------- date — MM/DD/YYYY, smaller monospaced ---------- */
+            const dateStr = `${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${now.getFullYear()}`;
+            pdfDoc.setFont('courier', 'normal');
+            pdfDoc.setFontSize(6);                       // was 9
+            pdfDoc.setTextColor(100, 116, 139);
+            pdfDoc.text(dateStr, pageW - margin, y + 3, { align: 'right' });
+
+            y += logoSize + 2;                           // was + 5
 
             /* ---------- divider ---------- */
-            doc.setDrawColor(210, 218, 226);
-            doc.setLineWidth(0.4);
-            doc.line(margin, y, pageW - margin, y);
-            y += 6;
+            pdfDoc.setDrawColor(210, 218, 226);
+            pdfDoc.setLineWidth(0.3);
+            pdfDoc.line(margin, y, pageW - margin, y);
+            y += 4;                                      // was 6
 
             /* ---------- section definitions ---------- */
             const sections = [
-                { name: 'T-6 A/B',       sub: 'Navy',         color: [202, 138, 4],  tbodyId: 'tbody-t6-usn' },
-                { name: 'T-6 A',  sub: 'Air Force',    color: [8, 145, 178],  tbodyId: 'tbody-usaf'   },
-                { name: 'T-44 C',          sub: 'Multi-Engine', color: [109, 40, 217], tbodyId: 'tbody-t44'    },
+                { name: 'T-6 A/B', sub: 'Navy',         color: [202, 138, 4],  tbodyId: 'tbody-t6-usn' },
+                { name: 'T-6 A',   sub: 'Air Force',    color: [8, 145, 178],  tbodyId: 'tbody-usaf'   },
+                { name: 'T-44 C',  sub: 'Multi-Engine', color: [109, 40, 217], tbodyId: 'tbody-t44'    },
             ];
 
             const colHeaders = [
@@ -1245,62 +1276,68 @@
             /* ---------- iterate sections ---------- */
             for (const sec of sections) {
 
-                // page-break guard
-                if (y > pageH - 40) { doc.addPage(); y = margin; }
+                // page-break guard (safety net)
+                if (y > pageH - 30) { pdfDoc.addPage(); y = margin; }
 
-                // coloured accent bar
-                doc.setFillColor(...sec.color);
-                doc.roundedRect(margin, y, 3, 5, 1, 1, 'F');
+                // coloured accent bar (slightly smaller)
+                pdfDoc.setFillColor(...sec.color);
+                pdfDoc.roundedRect(margin, y, 2.5, 4, 0.8, 0.8, 'F');
 
                 // section title
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(10);
-                doc.setTextColor(15, 23, 42);
-                doc.text(sec.name, margin + 6, y + 4);
+                pdfDoc.setFont('helvetica', 'bold');
+                pdfDoc.setFontSize(9);                   // was 10
+                pdfDoc.setTextColor(15, 23, 42);
+                pdfDoc.text(sec.name, margin + 5, y + 3);
 
-                const nameW = doc.getTextWidth(sec.name);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(7);
-                doc.setTextColor(148, 163, 184);
-                doc.text(sec.sub, margin + 6 + nameW + 3, y + 4);
+                const nameW = pdfDoc.getTextWidth(sec.name);
+                pdfDoc.setFont('helvetica', 'normal');
+                pdfDoc.setFontSize(6);                   // was 7
+                pdfDoc.setTextColor(148, 163, 184);
+                pdfDoc.text(sec.sub, margin + 5 + nameW + 2.5, y + 3);
 
-                y += 9;
+                y += 7;                                  // was 9
 
                 // table body data
                 const rows = scrapeTableBody(document.getElementById(sec.tbodyId));
 
                 if (rows.length === 0) {
-                    doc.setFont('helvetica', 'italic');
-                    doc.setFontSize(8);
-                    doc.setTextColor(148, 163, 184);
-                    doc.text('No entries', margin + 6, y + 3);
-                    y += 10;
+                    pdfDoc.setFont('helvetica', 'italic');
+                    pdfDoc.setFontSize(7);
+                    pdfDoc.setTextColor(148, 163, 184);
+                    pdfDoc.text('No entries', margin + 5, y + 2.5);
+                    y += 7;
                 } else {
-                    doc.autoTable({
+                    pdfDoc.autoTable({
                         startY: y,
                         head: [colHeaders],
                         body: rows,
                         margin: { left: margin, right: margin },
                         tableWidth: contentW,
                         showHead: 'everyPage',
+
+                        /* --- body / data-cell styles --- */
                         styles: {
-                            font: 'courier',
-                            fontSize: 6.5,
-                            cellPadding: { top: 2.2, right: 2, bottom: 2.2, left: 2 },
+                            font: dataFont,
+                            fontSize: 7.5,               // was 6.5 — slight bump
+                            cellPadding: { top: 1.5, right: 1.5, bottom: 1.5, left: 1.5 },
                             lineColor: [210, 218, 226],
-                            lineWidth: 0.25,
-                            textColor: [15, 23, 42],
+                            lineWidth: 0.2,
+                            textColor: [0, 0, 0],        // solid black
                             overflow: 'ellipsize',
                             halign: 'left',
                         },
+
+                        /* --- column-header styles --- */
                         headStyles: {
                             font: 'helvetica',
                             fontStyle: 'bold',
-                            fontSize: 5.5,
+                            fontSize: 5,                 // was 5.5
                             fillColor: [241, 245, 249],
                             textColor: [100, 116, 139],
+                            cellPadding: { top: 1.2, right: 1.5, bottom: 1.2, left: 1.5 },
                             halign: 'left',
                         },
+
                         alternateRowStyles: {
                             fillColor: [248, 250, 252],
                         },
@@ -1310,14 +1347,13 @@
                         theme: 'grid',
                     });
 
-                    y = doc.lastAutoTable.finalY + 10;
+                    y = pdfDoc.lastAutoTable.finalY + 6; // was + 10
                 }
             }
 
             /* ---------- save ---------- */
-            const pad = (n) => String(n).padStart(2, '0');
             const fName = `MoneyCard_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.pdf`;
-            doc.save(fName);
+            pdfDoc.save(fName);
         }
 
         exportBtn.addEventListener("click", exportPDF);
