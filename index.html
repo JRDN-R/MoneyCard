@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head> 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoneyCard — TRAINERS E&amp;E 62911</title>
+    <title>E&amp;E MoneyCard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
     <!-- PDF Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>
+
 
     <style>
         /* ========================================
@@ -137,19 +141,23 @@
         }
 
         .brand-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary), #6366f1);
-            border-radius: var(--radius);
+            width: 64px; /* Increased for a larger webpage logo */
+            height: 64px; /* Increased for a larger webpage logo */
+            border-radius: 50%; /* Perfect circle for the badge */
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
             flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            background: transparent;
+            overflow: hidden;
         }
 
-        .brand-icon svg { width: 20px; height: 20px; }
+        .brand-icon img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+        }
 
         .brand-text h1 {
             font-size: 1.125rem;
@@ -744,17 +752,13 @@
 
 <body class="logged-out">
 
-    <!-- Toast -->
     <div id="toast">Copied!</div>
 
-    <!-- ==================== Header ==================== -->
     <header class="app-header">
         <div class="header-inner">
             <div class="header-brand">
                 <div class="brand-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
-                    </svg>
+                    <img src="https://raw.githubusercontent.com/FRCSE-EE/MoneyCard/a3abbb5ab8c29a275a4d0e935ed47139f09b82d3/image-47ce0f45.webp" alt="FRCSE Logo">
                 </div>
                 <div class="brand-text">
                     <h1>MoneyCard</h1>
@@ -764,7 +768,6 @@
             <div class="header-actions">
                 <span class="admin-badge admin-only">Admin Mode</span>
 
-                <!-- Export PDF — always visible -->
                 <button id="exportBtn" class="btn btn-outline">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
@@ -788,7 +791,6 @@
         </div>
     </header>
 
-    <!-- ==================== Login Modal ==================== -->
     <div id="loginModal" class="modal">
         <div class="modal-overlay"></div>
         <div class="modal-content">
@@ -819,10 +821,8 @@
         </div>
     </div>
 
-    <!-- ==================== Main Content ==================== -->
     <main class="main-content" id="appContainer">
 
-        <!-- Add New Entry Form -->
         <div class="card admin-only" id="orderFormContainer">
             <div class="card-header">
                 <h2>Add New Work Order</h2>
@@ -891,7 +891,6 @@
             </div>
         </div>
 
-        <!-- T-6 USN -->
         <section class="data-section">
             <div class="section-accent accent-usn"></div>
             <div class="section-header">
@@ -914,7 +913,6 @@
             </div>
         </section>
 
-        <!-- USAF T-6 A/B -->
         <section class="data-section">
             <div class="section-accent accent-usaf"></div>
             <div class="section-header">
@@ -937,7 +935,6 @@
             </div>
         </section>
 
-        <!-- T-44c -->
         <section class="data-section">
             <div class="section-accent accent-t44"></div>
             <div class="section-header">
@@ -962,7 +959,6 @@
 
     </main>
 
-    <!-- ==================== Application Logic ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -1171,46 +1167,26 @@
         //  PDF EXPORT
         // =============================================
 
+        // Fetches the WebP directly and converts it to a PNG Data URL so jsPDF can embed it properly.
         function createLogoDataURL() {
             return new Promise((resolve) => {
-                const s = 160;
-                const canvas = document.createElement('canvas');
-                canvas.width = s;
-                canvas.height = s;
-                const ctx = canvas.getContext('2d');
-
-                const svgMarkup = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
-                        <defs>
-                            <linearGradient id="lg" x1="0" y1="0" x2="${s}" y2="${s}" gradientUnits="userSpaceOnUse">
-                                <stop offset="0" stop-color="#3b82f6"/>
-                                <stop offset="1" stop-color="#6366f1"/>
-                            </linearGradient>
-                        </defs>
-                        <rect width="${s}" height="${s}" rx="${Math.round(s * 0.2)}" fill="url(#lg)"/>
-                        <g transform="translate(${s * 0.2},${s * 0.2}) scale(${(s * 0.6 / 24).toFixed(2)})"
-                           fill="none" stroke="white" stroke-width="1.8"
-                           stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5
-                                     1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1
-                                     .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5
-                                     5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
-                        </g>
-                    </svg>`;
-
-                const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-                const url  = URL.createObjectURL(blob);
-                const img  = new Image();
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // Required to draw external images to a canvas
                 img.onload = () => {
-                    ctx.drawImage(img, 0, 0, s, s);
-                    URL.revokeObjectURL(url);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    // Outputting as PNG provides the maximum compatibility inside standard jsPDF
                     resolve(canvas.toDataURL('image/png'));
                 };
                 img.onerror = () => {
-                    URL.revokeObjectURL(url);
+                    console.error("Failed to load WebP logo for PDF export.");
                     resolve(null);
                 };
-                img.src = url;
+                // Pulling the WebP image directly from your repository's raw content
+                img.src = 'https://raw.githubusercontent.com/FRCSE-EE/MoneyCard/a3abbb5ab8c29a275a4d0e935ed47139f09b82d3/image-47ce0f45.webp';
             });
         }
 
@@ -1250,8 +1226,8 @@
            Matches the CSS nth-child rules exactly.
            ============================================== */
         const HDR_COLORS = {
-            0:  { fill: [244, 220, 124], text: [0, 0, 0]       },   // SEQ        #F4DC7C
-            1:  { fill: [244, 220, 124], text: [0, 0, 0]       },   // BUNO       #F4DC7C
+            0:  { fill: [244, 220, 124], text: [0, 0, 0]       },   // SEQ         #F4DC7C
+            1:  { fill: [244, 220, 124], text: [0, 0, 0]       },   // BUNO        #F4DC7C
             2:  { fill: [212, 224, 196], text: [0, 0, 0]       },   // E&E ORDER  #D4E0C4
             3:  { fill: [177, 210, 229], text: [0, 0, 0]       },   // SALES ORD  #B1D2E5
             4:  { fill: [177, 210, 229], text: [0, 0, 0]       },   // PROJECT 1  #B1D2E5
@@ -1300,7 +1276,7 @@
 
             /* ---------- logo ---------- */
             const logoDataURL = await createLogoDataURL();
-            const logoSize = 5;
+            const logoSize = 12; // Increased logo size for PDF
             if (logoDataURL) {
                 pdfDoc.addImage(logoDataURL, 'PNG', margin, y, logoSize, logoSize);
             } else {
@@ -1310,22 +1286,22 @@
 
             /* ---------- header text ---------- */
             pdfDoc.setFont('helvetica', 'bold');
-            pdfDoc.setFontSize(7);
+            pdfDoc.setFontSize(11); // Increased title font size
             pdfDoc.setTextColor(15, 23, 42);
-            pdfDoc.text('MoneyCard', margin + logoSize + 2.5, y + 2.3);
+            pdfDoc.text('MoneyCard', margin + logoSize + 3, y + 4.5); // Adjusted Y offset for new logo size
 
             pdfDoc.setFont('helvetica', 'normal');
-            pdfDoc.setFontSize(3);
+            pdfDoc.setFontSize(6); // Increased subtitle font size
             pdfDoc.setTextColor(148, 163, 184);
-            pdfDoc.text('TRAINERS E&E 62911', margin + logoSize + 2.5, y + 4.3);
+            pdfDoc.text('TRAINERS E&E 62911', margin + logoSize + 3, y + 8.5); // Adjusted Y offset
 
             const dateStr = `${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${now.getFullYear()}`;
             pdfDoc.setFont('courier', 'normal');
-            pdfDoc.setFontSize(6);
-            pdfDoc.setTextColor(100, 116, 139);
-            pdfDoc.text(dateStr, pageW - margin, y + 3, { align: 'right' });
+            pdfDoc.setFontSize(9); // Increased date font size
+            pdfDoc.setTextColor(15, 23, 42); // Darkened to match title text
+            pdfDoc.text(dateStr, pageW - margin, y + 6, { align: 'right' }); // Adjusted Y offset
 
-            y += logoSize + 2;
+            y += logoSize + 4; // Added slightly more padding below the taller header
 
             /* ---------- divider ---------- */
             pdfDoc.setDrawColor(210, 218, 226);
