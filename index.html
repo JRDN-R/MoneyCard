@@ -6,7 +6,7 @@
     <title>MoneyCard — TRAINERS E&amp;E 62911</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- PDF Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
@@ -50,6 +50,7 @@
 
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+            --font-anon: 'Anonymous Pro', 'Courier New', Courier, monospace;
 
             --radius-sm: 6px;
             --radius: 10px;
@@ -70,6 +71,16 @@
             --dur-fast: 150ms;
             --dur: 200ms;
             --dur-slow: 300ms;
+
+            /* Header-column palette */
+            --hdr-seq:       #F4DC7C;
+            --hdr-ee:        #D4E0C4;
+            --hdr-sales:     #B1D2E5;
+            --hdr-kits:      #D4B1E5;
+            --hdr-repair:    #B1D2E5;
+            --hdr-tms:       #E9B8A5;
+            --hdr-wing-bg:   #191E1E;
+            --hdr-wing-text: #FFFFFF;
         }
 
         /* ========================================
@@ -241,12 +252,13 @@
         .btn-lg svg { width: 18px; height: 18px; }
 
         /* ========================================
-           Main Content
+           Main Content  — Anonymous Pro base font
            ======================================== */
         .main-content {
             max-width: 1440px;
             margin: 0 auto;
             padding: 32px 28px 80px;
+            font-family: var(--font-anon);
         }
 
         /* ========================================
@@ -308,7 +320,7 @@
         .form-input,
         .form-select {
             padding: 10px 13px;
-            font-family: var(--font-sans);
+            font-family: var(--font-anon);
             font-size: 0.875rem;
             color: var(--text);
             background: var(--surface);
@@ -412,13 +424,14 @@
             min-width: 920px;
         }
 
+        /* ---------- base header cell ---------- */
         th {
-            font-family: var(--font-sans);
+            font-family: var(--font-anon);
             font-size: 0.6875rem;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            color: var(--text-muted);
+            color: #000000;
             padding: 11px 18px;
             text-align: left;
             background: var(--surface-hover);
@@ -426,11 +439,12 @@
             white-space: nowrap;
         }
 
+        /* ---------- data cell ---------- */
         td {
-            font-family: var(--font-mono);
-            font-size: 0.8125rem;
+            font-family: var(--font-anon);
+            font-size: 1.0525rem;
             font-weight: 400;
-            padding: 12px 18px;
+            padding: 8px 12px;
             color: var(--text);
             border-bottom: 1px solid var(--border);
             white-space: nowrap;
@@ -442,6 +456,56 @@
 
         th.group-end, td.group-end {
             border-right: 2px solid var(--border-strong);
+        }
+
+        /* ========================================
+           Header-Cell Color Coding
+           (only <th> inside <thead> — data rows untouched)
+           ======================================== */
+
+        /* SEQ & BUNO — warm gold */
+        thead th:nth-child(1),
+        thead th:nth-child(2) {
+            background: var(--hdr-seq);
+            color: #000000;
+        }
+
+        /* E&E ORDER — soft green */
+        thead th:nth-child(3) {
+            background: var(--hdr-ee);
+            color: #000000;
+        }
+
+        /* SALES ORDER & first PROJECT NO. — light blue */
+        thead th:nth-child(4),
+        thead th:nth-child(5) {
+            background: var(--hdr-sales);
+            color: #000000;
+        }
+
+        /* KITS ORDER & second PROJECT NO. — light purple */
+        thead th:nth-child(6),
+        thead th:nth-child(7) {
+            background: var(--hdr-kits);
+            color: #000000;
+        }
+
+        /* REPAIR ID — light blue (same as sales group) */
+        thead th:nth-child(8) {
+            background: var(--hdr-repair);
+            color: #000000;
+        }
+
+        /* T/M/S — warm peach */
+        thead th:nth-child(9) {
+            background: var(--hdr-tms);
+            color: #000000;
+        }
+
+        /* WING S/N — dark with white text */
+        thead th:nth-child(10) {
+            background: var(--hdr-wing-bg);
+            color: var(--hdr-wing-text);
         }
 
         /* ========================================
@@ -1107,10 +1171,6 @@
         //  PDF EXPORT
         // =============================================
 
-        /**
-         *  Render the brand-icon SVG onto a hidden <canvas>
-         *  and return a PNG data-URL for embedding in the PDF.
-         */
         function createLogoDataURL() {
             return new Promise((resolve) => {
                 const s = 160;
@@ -1154,11 +1214,6 @@
             });
         }
 
-        /**
-         *  Scrape visible rows from a <tbody> element and return
-         *  an array-of-arrays (one sub-array per row), stripping
-         *  the delete-button text from the last cell.
-         */
         function scrapeTableBody(tbodyEl) {
             const rows = [];
             tbodyEl.querySelectorAll('tr').forEach(tr => {
@@ -1176,10 +1231,6 @@
             return rows;
         }
 
-        /**
-         *  Fetch a TTF font file and return it as a base-64 string
-         *  suitable for jsPDF's addFileToVFS.
-         */
         async function fetchFontBase64(url) {
             const resp = await fetch(url);
             if (!resp.ok) throw new Error(`Font fetch ${resp.status}`);
@@ -1194,11 +1245,27 @@
             return btoa(bin);
         }
 
+        /* ==============================================
+           Header-column colour map  (index → RGB)
+           Matches the CSS nth-child rules exactly.
+           ============================================== */
+        const HDR_COLORS = {
+            0:  { fill: [244, 220, 124], text: [0, 0, 0]       },   // SEQ        #F4DC7C
+            1:  { fill: [244, 220, 124], text: [0, 0, 0]       },   // BUNO       #F4DC7C
+            2:  { fill: [212, 224, 196], text: [0, 0, 0]       },   // E&E ORDER  #D4E0C4
+            3:  { fill: [177, 210, 229], text: [0, 0, 0]       },   // SALES ORD  #B1D2E5
+            4:  { fill: [177, 210, 229], text: [0, 0, 0]       },   // PROJECT 1  #B1D2E5
+            5:  { fill: [212, 177, 229], text: [0, 0, 0]       },   // KITS ORD   #D4B1E5
+            6:  { fill: [212, 177, 229], text: [0, 0, 0]       },   // PROJECT 2  #D4B1E5
+            7:  { fill: [177, 210, 229], text: [0, 0, 0]       },   // REPAIR ID  #B1D2E5
+            8:  { fill: [233, 184, 165], text: [0, 0, 0]       },   // T/M/S      #E9B8A5
+            9:  { fill: [25,  30,  30 ], text: [255, 255, 255] },   // WING S/N   #191E1E
+        };
+
         async function exportPDF() {
 
             const { jsPDF } = window.jspdf;
 
-            /* ---------- page geometry (letter = 8.5 × 11 in) ---------- */
             const pdfDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
             const pageW   = 215.9;
             const pageH   = 279.4;
@@ -1209,14 +1276,21 @@
             const pad = (n) => String(n).padStart(2, '0');
             const now = new Date();
 
-            /* ---------- load Anonymous Pro into jsPDF ---------- */
+            /* ---------- load Anonymous Pro Regular + Bold ---------- */
             let hasAnonPro = false;
             try {
-                const b64 = await fetchFontBase64(
-                    'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anonymouspro/AnonymousPro-Regular.ttf'
-                );
-                pdfDoc.addFileToVFS('AnonymousPro-Regular.ttf', b64);
+                const [b64Regular, b64Bold] = await Promise.all([
+                    fetchFontBase64(
+                        'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anonymouspro/AnonymousPro-Regular.ttf'
+                    ),
+                    fetchFontBase64(
+                        'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anonymouspro/AnonymousPro-Bold.ttf'
+                    ),
+                ]);
+                pdfDoc.addFileToVFS('AnonymousPro-Regular.ttf', b64Regular);
                 pdfDoc.addFont('AnonymousPro-Regular.ttf', 'AnonymousPro', 'normal');
+                pdfDoc.addFileToVFS('AnonymousPro-Bold.ttf', b64Bold);
+                pdfDoc.addFont('AnonymousPro-Bold.ttf', 'AnonymousPro', 'bold');
                 hasAnonPro = true;
             } catch (e) {
                 console.warn('Anonymous Pro unavailable for PDF; using Courier fallback.', e);
@@ -1224,7 +1298,7 @@
 
             const dataFont = hasAnonPro ? 'AnonymousPro' : 'courier';
 
-            /* ---------- logo (shrunk — was 9 mm) ---------- */
+            /* ---------- logo ---------- */
             const logoDataURL = await createLogoDataURL();
             const logoSize = 5;
             if (logoDataURL) {
@@ -1234,31 +1308,30 @@
                 pdfDoc.roundedRect(margin, y, logoSize, logoSize, 1.2, 1.2, 'F');
             }
 
-            /* ---------- header text — under half original size ---------- */
+            /* ---------- header text ---------- */
             pdfDoc.setFont('helvetica', 'bold');
-            pdfDoc.setFontSize(7);                       // was 16
+            pdfDoc.setFontSize(7);
             pdfDoc.setTextColor(15, 23, 42);
             pdfDoc.text('MoneyCard', margin + logoSize + 2.5, y + 2.3);
 
             pdfDoc.setFont('helvetica', 'normal');
-            pdfDoc.setFontSize(3);                       // was 7
+            pdfDoc.setFontSize(3);
             pdfDoc.setTextColor(148, 163, 184);
             pdfDoc.text('TRAINERS E&E 62911', margin + logoSize + 2.5, y + 4.3);
 
-            /* ---------- date — MM/DD/YYYY, smaller monospaced ---------- */
             const dateStr = `${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${now.getFullYear()}`;
             pdfDoc.setFont('courier', 'normal');
-            pdfDoc.setFontSize(6);                       // was 9
+            pdfDoc.setFontSize(6);
             pdfDoc.setTextColor(100, 116, 139);
             pdfDoc.text(dateStr, pageW - margin, y + 3, { align: 'right' });
 
-            y += logoSize + 2;                           // was + 5
+            y += logoSize + 2;
 
             /* ---------- divider ---------- */
             pdfDoc.setDrawColor(210, 218, 226);
             pdfDoc.setLineWidth(0.3);
             pdfDoc.line(margin, y, pageW - margin, y);
-            y += 4;                                      // was 6
+            y += 4;
 
             /* ---------- section definitions ---------- */
             const sections = [
@@ -1276,28 +1349,24 @@
             /* ---------- iterate sections ---------- */
             for (const sec of sections) {
 
-                // page-break guard (safety net)
                 if (y > pageH - 30) { pdfDoc.addPage(); y = margin; }
 
-                // coloured accent bar (slightly smaller)
                 pdfDoc.setFillColor(...sec.color);
                 pdfDoc.roundedRect(margin, y, 2.5, 4, 0.8, 0.8, 'F');
 
-                // section title
                 pdfDoc.setFont('helvetica', 'bold');
-                pdfDoc.setFontSize(9);                   // was 10
+                pdfDoc.setFontSize(9);
                 pdfDoc.setTextColor(15, 23, 42);
                 pdfDoc.text(sec.name, margin + 5, y + 3);
 
                 const nameW = pdfDoc.getTextWidth(sec.name);
                 pdfDoc.setFont('helvetica', 'normal');
-                pdfDoc.setFontSize(6);                   // was 7
+                pdfDoc.setFontSize(6);
                 pdfDoc.setTextColor(148, 163, 184);
                 pdfDoc.text(sec.sub, margin + 5 + nameW + 2.5, y + 3);
 
-                y += 7;                                  // was 9
+                y += 7;
 
-                // table body data
                 const rows = scrapeTableBody(document.getElementById(sec.tbodyId));
 
                 if (rows.length === 0) {
@@ -1315,25 +1384,25 @@
                         tableWidth: contentW,
                         showHead: 'everyPage',
 
-                        /* --- body / data-cell styles --- */
+                        /* --- body / data-cell styles (untouched) --- */
                         styles: {
                             font: dataFont,
-                            fontSize: 7.5,               // was 6.5 — slight bump
-                            cellPadding: { top: 1.5, right: 1.5, bottom: 1.5, left: 1.5 },
+                            fontSize: 9.0,
+                            cellPadding: { top: 1.0, right: 1.5, bottom: 1.0, left: 1.5 },
                             lineColor: [210, 218, 226],
                             lineWidth: 0.2,
-                            textColor: [0, 0, 0],        // solid black
+                            textColor: [0, 0, 0],
                             overflow: 'ellipsize',
                             halign: 'left',
                         },
 
-                        /* --- column-header styles --- */
+                        /* --- column-header base styles --- */
                         headStyles: {
-                            font: 'helvetica',
+                            font: dataFont,
                             fontStyle: 'bold',
-                            fontSize: 5,                 // was 5.5
+                            fontSize: 7,
                             fillColor: [241, 245, 249],
-                            textColor: [100, 116, 139],
+                            textColor: [0, 0, 0],
                             cellPadding: { top: 1.2, right: 1.5, bottom: 1.2, left: 1.5 },
                             halign: 'left',
                         },
@@ -1345,9 +1414,20 @@
                             fillColor: [255, 255, 255],
                         },
                         theme: 'grid',
+
+                        /* --- per-cell colour coding for headers --- */
+                        didParseCell: function (data) {
+                            if (data.section === 'head') {
+                                const map = HDR_COLORS[data.column.index];
+                                if (map) {
+                                    data.cell.styles.fillColor = map.fill;
+                                    data.cell.styles.textColor = map.text;
+                                }
+                            }
+                        },
                     });
 
-                    y = pdfDoc.lastAutoTable.finalY + 6; // was + 10
+                    y = pdfDoc.lastAutoTable.finalY + 6;
                 }
             }
 
