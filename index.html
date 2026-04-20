@@ -49,8 +49,6 @@
             --accent-usn-bg: rgba(234,179,8,0.07);
             --accent-usaf: #06b6d4;
             --accent-usaf-bg: rgba(6,182,212,0.07);
-            --accent-t44: #8b5cf6;
-            --accent-t44-bg: rgba(139,92,246,0.07);
 
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
@@ -381,7 +379,6 @@
 
         .accent-usn  { background: linear-gradient(90deg, var(--accent-usn), #facc15); }
         .accent-usaf { background: linear-gradient(90deg, var(--accent-usaf), #22d3ee); }
-        .accent-t44  { background: linear-gradient(90deg, var(--accent-t44), #a78bfa); }
 
         .section-header {
             display: flex;
@@ -403,7 +400,6 @@
 
         .badge-usn  { background: var(--accent-usn-bg); color: #92400e; border: 1px solid rgba(234,179,8,0.18); }
         .badge-usaf { background: var(--accent-usaf-bg); color: #0e7490; border: 1px solid rgba(6,182,212,0.18); }
-        .badge-t44  { background: var(--accent-t44-bg); color: #5b21b6; border: 1px solid rgba(139,92,246,0.18); }
 
         .section-label {
             font-size: 0.8125rem;
@@ -904,7 +900,6 @@
                                 <option value="" disabled selected>Select aircraft section…</option>
                                 <option value="T-6 USN">T-6 USN (Navy)</option>
                                 <option value="USAF T-6 A/B">USAF T-6 A/B</option>
-                                <option value="T-44c">T-44c</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1014,34 +1009,6 @@
             </div>
         </section>
 
-        <section class="data-section">
-            <div class="section-accent accent-t44"></div>
-            <div class="section-header aircraft-header">
-                <div class="aircraft-graphic">
-                    <img src="https://raw.githubusercontent.com/JRDN-R/MoneyCard/391dfe38f632fef40ceea8ead755335957eb0fed/T44.svg" alt="T-44 Multi-Engine">
-                </div>
-                <div class="aircraft-title">
-                    <span class="title-main">T-44</span>
-                    <span class="title-sub">C</span>
-                    <span class="title-branch">(USN/Multi-Engine)</span>
-                </div>
-            </div>
-            <div class="table-scroll">
-                <table id="table-t44">
-                    <thead><tr>
-                        <th>SEQ</th><th class="group-end">BUNO</th>
-                        <th class="group-end">E&amp;E ORDER</th>
-                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th class="group-end">REPAIR ID</th>
-                        <th class="group-end">T/M/S</th>
-                        <th>WING S/N</th>
-                    </tr></thead>
-                    <tbody id="tbody-t44"></tbody>
-                </table>
-            </div>
-        </section>
-
     </main>
 
     <script type="module">
@@ -1076,7 +1043,6 @@
         const orderForm = document.getElementById("orderForm");
         const tbodyT6Usn = document.getElementById("tbody-t6-usn");
         const tbodyUsaf = document.getElementById("tbody-usaf");
-        const tbodyT44 = document.getElementById("tbody-t44");
 
         // --- UTILITY ---
         function getTextWithoutButton(cell) {
@@ -1145,7 +1111,6 @@
                 </tr>`.repeat(3);
             tbodyT6Usn.innerHTML = skeletonHTML;
             tbodyUsaf.innerHTML = skeletonHTML;
-            tbodyT44.innerHTML = skeletonHTML;
         }
 
         // --- DATA ---
@@ -1157,7 +1122,6 @@
                 
                 tbodyT6Usn.innerHTML = "";
                 tbodyUsaf.innerHTML = "";
-                tbodyT44.innerHTML = "";
                 
                 let allEntries = [];
 
@@ -1187,7 +1151,6 @@
                         </td>`;
                     if (data.aircraftType === "T-6 USN") tbodyT6Usn.appendChild(row);
                     else if (data.aircraftType === "USAF T-6 A/B") tbodyUsaf.appendChild(row);
-                    else if (data.aircraftType === "T-44c") tbodyT44.appendChild(row);
                 });
 
                 document.querySelectorAll(".delete-btn").forEach(button => {
@@ -1407,7 +1370,6 @@
             const sections = [
                 { name: 'T-6 A/B', sub: 'Navy',         color: [202, 138, 4],  tbodyId: 'tbody-t6-usn' },
                 { name: 'T-6 A',   sub: 'Air Force',    color: [8, 145, 178],  tbodyId: 'tbody-usaf'   },
-                { name: 'T-44 C',  sub: 'Multi-Engine', color: [109, 40, 217], tbodyId: 'tbody-t44'    },
             ];
 
             const colHeaders = [
