@@ -49,6 +49,8 @@
             --accent-usn-bg: rgba(234,179,8,0.07);
             --accent-usaf: #06b6d4;
             --accent-usaf-bg: rgba(6,182,212,0.07);
+            --accent-wings: #10b981;
+            --accent-wings-bg: rgba(16,185,129,0.07);
 
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
@@ -377,8 +379,9 @@
 
         .section-accent { height: 3px; }
 
-        .accent-usn  { background: linear-gradient(90deg, var(--accent-usn), #facc15); }
-        .accent-usaf { background: linear-gradient(90deg, var(--accent-usaf), #22d3ee); }
+        .accent-usn   { background: linear-gradient(90deg, var(--accent-usn), #facc15); }
+        .accent-usaf  { background: linear-gradient(90deg, var(--accent-usaf), #22d3ee); }
+        .accent-wings { background: linear-gradient(90deg, var(--accent-wings), #34d399); }
 
         .section-header {
             display: flex;
@@ -577,6 +580,38 @@
         thead th:nth-child(10) {
             background: var(--hdr-wing-bg);
             color: var(--hdr-wing-text);
+        }
+
+        /* ========================================
+           Wings table — custom column structure
+           (overrides the generic nth-child coloring above)
+           ======================================== */
+        #table-wings thead th:nth-child(1) {
+            background: var(--hdr-wing-bg);
+            color: var(--hdr-wing-text);
+        }
+
+        #table-wings thead th:nth-child(2),
+        #table-wings thead th:nth-child(3) {
+            background: var(--hdr-seq);
+            color: #000000;
+        }
+
+        #table-wings thead th:nth-child(4) {
+            background: var(--hdr-ee);
+            color: #000000;
+        }
+
+        #table-wings thead th:nth-child(5),
+        #table-wings thead th:nth-child(6),
+        #table-wings thead th:nth-child(7) {
+            background: var(--hdr-sales);
+            color: #000000;
+        }
+
+        #table-wings thead th:nth-child(8) {
+            background: var(--hdr-tms);
+            color: #000000;
         }
 
         /* ========================================
@@ -900,7 +935,12 @@
                                 <option value="" disabled selected>Select aircraft section…</option>
                                 <option value="T-6 USN">T-6 USN (Navy)</option>
                                 <option value="USAF T-6 A/B">USAF T-6 A/B</option>
+                                <option value="Wings">Wings</option>
                             </select>
+                        </div>
+                        <div class="form-group" id="group-serialNo" style="display:none;">
+                            <label for="serialNo">Serial No.</label>
+                            <input type="text" id="serialNo" class="form-input" placeholder="Serial number">
                         </div>
                         <div class="form-group">
                             <label for="seq">SEQ</label>
@@ -922,11 +962,11 @@
                             <label for="projectNo1">A/C Project No.</label>
                             <input type="text" id="projectNo1" class="form-input" placeholder="Project number">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="group-kitsOrder">
                             <label for="kitsOrder">Kits Order</label>
                             <input type="text" id="kitsOrder" class="form-input" placeholder="Kits order #">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="group-projectNo2">
                             <label for="projectNo2">Kit Project No.</label>
                             <input type="text" id="projectNo2" class="form-input" placeholder="Project number">
                         </div>
@@ -938,7 +978,7 @@
                             <label for="tms">T/M/S</label>
                             <input type="text" id="tms" class="form-input" placeholder="Type / Model / Series">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="group-wingSn">
                             <label for="wingSn">Wing S/N</label>
                             <input type="text" id="wingSn" class="form-input" placeholder="Wing serial #">
                         </div>
@@ -1009,6 +1049,28 @@
             </div>
         </section>
 
+        <section class="data-section">
+            <div class="section-accent accent-wings"></div>
+            <div class="section-header aircraft-header">
+                <div class="aircraft-title">
+                    <span class="title-main">Wings</span>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table id="table-wings">
+                    <thead><tr>
+                        <th class="group-end">SERIAL NO.</th>
+                        <th>SEQ</th><th class="group-end">BUNO</th>
+                        <th class="group-end">E&amp;E ORDER</th>
+                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+                        <th class="group-end">REPAIR ID</th>
+                        <th>T/M/S</th>
+                    </tr></thead>
+                    <tbody id="tbody-wings"></tbody>
+                </table>
+            </div>
+        </section>
+
     </main>
 
     <script type="module">
@@ -1043,6 +1105,7 @@
         const orderForm = document.getElementById("orderForm");
         const tbodyT6Usn = document.getElementById("tbody-t6-usn");
         const tbodyUsaf = document.getElementById("tbody-usaf");
+        const tbodyWings = document.getElementById("tbody-wings");
 
         // --- UTILITY ---
         function getTextWithoutButton(cell) {
@@ -1059,6 +1122,25 @@
             toast.classList.add("show");
             setTimeout(() => toast.classList.remove("show"), 2000);
         }
+
+        // --- DYNAMIC FORM FIELDS (depends on selected section) ---
+        const aircraftTypeSelect = document.getElementById("aircraftType");
+        const groupSerialNo  = document.getElementById("group-serialNo");
+        const groupKitsOrder = document.getElementById("group-kitsOrder");
+        const groupProjectNo2 = document.getElementById("group-projectNo2");
+        const groupWingSn    = document.getElementById("group-wingSn");
+
+        function updateFormFields() {
+            const isWings = aircraftTypeSelect.value === "Wings";
+            // Wings uses a SERIAL NO. column but no Kits Order, Kit Project No., or Wing S/N
+            groupSerialNo.style.display  = isWings ? "" : "none";
+            groupKitsOrder.style.display = isWings ? "none" : "";
+            groupProjectNo2.style.display = isWings ? "none" : "";
+            groupWingSn.style.display    = isWings ? "none" : "";
+        }
+
+        aircraftTypeSelect.addEventListener("change", updateFormFields);
+        updateFormFields();
 
         // --- MODAL ---
         editBtn.addEventListener("click", () => {
@@ -1111,6 +1193,17 @@
                 </tr>`.repeat(3);
             tbodyT6Usn.innerHTML = skeletonHTML;
             tbodyUsaf.innerHTML = skeletonHTML;
+
+            const wingsSkeletonHTML = `
+                <tr class="skeleton-row">
+                    <td class="group-end"><span></span></td>
+                    <td><span></span></td><td class="group-end"><span></span></td>
+                    <td class="group-end"><span></span></td>
+                    <td><span></span></td><td class="group-end"><span></span></td>
+                    <td class="group-end"><span></span></td>
+                    <td><span></span></td>
+                </tr>`.repeat(3);
+            tbodyWings.innerHTML = wingsSkeletonHTML;
         }
 
         // --- DATA ---
@@ -1122,6 +1215,7 @@
                 
                 tbodyT6Usn.innerHTML = "";
                 tbodyUsaf.innerHTML = "";
+                tbodyWings.innerHTML = "";
                 
                 let allEntries = [];
 
@@ -1135,22 +1229,39 @@
                 allEntries.forEach((data) => {
                     const row = document.createElement("tr");
                     row.setAttribute("data-id", data.id);
-                    row.innerHTML = `
-                        <td class="editable-cell" data-field="seq">${data.seq || ''}</td>
-                        <td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
-                        <td class="group-end editable-cell" data-field="eeOrder">${data.eeOrder || ''}</td>
-                        <td class="editable-cell" data-field="salesOrder">${data.salesOrder || ''}</td>
-                        <td class="group-end editable-cell" data-field="projectNo1">${data.projectNo1 || ''}</td>
-                        <td class="editable-cell" data-field="kitsOrder">${data.kitsOrder || ''}</td>
-                        <td class="group-end editable-cell" data-field="projectNo2">${data.projectNo2 || ''}</td>
-                        <td class="group-end editable-cell" data-field="repairId">${data.repairId || ''}</td>
-                        <td class="group-end editable-cell" data-field="tms">${data.tms || ''}</td>
-                        <td class="relative-cell editable-cell" data-field="wingSn">
-                            ${data.wingSn || ''}
-                            <button class="delete-btn admin-only" data-id="${data.id}">✕</button>
-                        </td>`;
-                    if (data.aircraftType === "T-6 USN") tbodyT6Usn.appendChild(row);
-                    else if (data.aircraftType === "USAF T-6 A/B") tbodyUsaf.appendChild(row);
+
+                    if (data.aircraftType === "Wings") {
+                        row.innerHTML = `
+                            <td class="group-end editable-cell" data-field="serialNo">${data.serialNo || ''}</td>
+                            <td class="editable-cell" data-field="seq">${data.seq || ''}</td>
+                            <td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
+                            <td class="group-end editable-cell" data-field="eeOrder">${data.eeOrder || ''}</td>
+                            <td class="editable-cell" data-field="salesOrder">${data.salesOrder || ''}</td>
+                            <td class="group-end editable-cell" data-field="projectNo1">${data.projectNo1 || ''}</td>
+                            <td class="group-end editable-cell" data-field="repairId">${data.repairId || ''}</td>
+                            <td class="relative-cell editable-cell" data-field="tms">
+                                ${data.tms || ''}
+                                <button class="delete-btn admin-only" data-id="${data.id}">✕</button>
+                            </td>`;
+                        tbodyWings.appendChild(row);
+                    } else {
+                        row.innerHTML = `
+                            <td class="editable-cell" data-field="seq">${data.seq || ''}</td>
+                            <td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
+                            <td class="group-end editable-cell" data-field="eeOrder">${data.eeOrder || ''}</td>
+                            <td class="editable-cell" data-field="salesOrder">${data.salesOrder || ''}</td>
+                            <td class="group-end editable-cell" data-field="projectNo1">${data.projectNo1 || ''}</td>
+                            <td class="editable-cell" data-field="kitsOrder">${data.kitsOrder || ''}</td>
+                            <td class="group-end editable-cell" data-field="projectNo2">${data.projectNo2 || ''}</td>
+                            <td class="group-end editable-cell" data-field="repairId">${data.repairId || ''}</td>
+                            <td class="group-end editable-cell" data-field="tms">${data.tms || ''}</td>
+                            <td class="relative-cell editable-cell" data-field="wingSn">
+                                ${data.wingSn || ''}
+                                <button class="delete-btn admin-only" data-id="${data.id}">✕</button>
+                            </td>`;
+                        if (data.aircraftType === "T-6 USN") tbodyT6Usn.appendChild(row);
+                        else if (data.aircraftType === "USAF T-6 A/B") tbodyUsaf.appendChild(row);
+                    }
                 });
 
                 document.querySelectorAll(".delete-btn").forEach(button => {
@@ -1213,6 +1324,7 @@
             e.preventDefault();
             const newEntry = {
                 aircraftType: document.getElementById("aircraftType").value,
+                serialNo: document.getElementById("serialNo").value,
                 seq: document.getElementById("seq").value,
                 buno: document.getElementById("buno").value,
                 eeOrder: document.getElementById("eeOrder").value,
@@ -1228,6 +1340,7 @@
             try {
                 await addDoc(entriesCollection, newEntry);
                 orderForm.reset();
+                updateFormFields();
                 loadData();
             } catch (error) { console.error("Error adding document: ", error); alert("Failed to save new entry."); }
         });
@@ -1288,7 +1401,8 @@ function createLogoDataURL() {
             return btoa(bin);
         }
 
-        const HDR_COLORS = {
+        // Header colors for the standard (USN / USAF) 10-column layout
+        const STD_HDR_COLORS = {
             0:  { fill: [244, 220, 124], text: [0, 0, 0]       },
             1:  { fill: [244, 220, 124], text: [0, 0, 0]       },
             2:  { fill: [212, 224, 196], text: [0, 0, 0]       },
@@ -1300,6 +1414,29 @@ function createLogoDataURL() {
             8:  { fill: [233, 184, 165], text: [0, 0, 0]       },
             9:  { fill: [25,  30,  30 ], text: [255, 255, 255] },
         };
+
+        // Header colors for the Wings 8-column layout
+        const WINGS_HDR_COLORS = {
+            0:  { fill: [25,  30,  30 ], text: [255, 255, 255] }, // SERIAL NO.
+            1:  { fill: [244, 220, 124], text: [0, 0, 0]       }, // SEQ
+            2:  { fill: [244, 220, 124], text: [0, 0, 0]       }, // BUNO
+            3:  { fill: [212, 224, 196], text: [0, 0, 0]       }, // E&E ORDER
+            4:  { fill: [177, 210, 229], text: [0, 0, 0]       }, // SALES ORDER
+            5:  { fill: [177, 210, 229], text: [0, 0, 0]       }, // PROJECT NO.
+            6:  { fill: [177, 210, 229], text: [0, 0, 0]       }, // REPAIR ID
+            7:  { fill: [233, 184, 165], text: [0, 0, 0]       }, // T/M/S
+        };
+
+        const STD_COLS = [
+            'SEQ', 'BUNO', 'E&E ORDER', 'SALES ORDER',
+            'PROJECT NO.', 'KITS ORDER', 'PROJECT NO.',
+            'REPAIR ID', 'T/M/S', 'WING S/N'
+        ];
+
+        const WINGS_COLS = [
+            'SERIAL NO.', 'SEQ', 'BUNO', 'E&E ORDER',
+            'SALES ORDER', 'PROJECT NO.', 'REPAIR ID', 'T/M/S'
+        ];
 
         async function exportPDF() {
 
@@ -1369,14 +1506,9 @@ function createLogoDataURL() {
             y += 4;
 
             const sections = [
-                { name: 'T-6 A/B', sub: 'Navy',         color: [202, 138, 4],  tbodyId: 'tbody-t6-usn' },
-                { name: 'T-6 A',   sub: 'Air Force',    color: [8, 145, 178],  tbodyId: 'tbody-usaf'   },
-            ];
-
-            const colHeaders = [
-                'SEQ', 'BUNO', 'E&E ORDER', 'SALES ORDER',
-                'PROJECT NO.', 'KITS ORDER', 'PROJECT NO.',
-                'REPAIR ID', 'T/M/S', 'WING S/N'
+                { name: 'T-6 A/B', sub: 'Navy',      color: [202, 138, 4],  tbodyId: 'tbody-t6-usn', columns: STD_COLS,   headerColors: STD_HDR_COLORS   },
+                { name: 'T-6 A',   sub: 'Air Force', color: [8, 145, 178],  tbodyId: 'tbody-usaf',   columns: STD_COLS,   headerColors: STD_HDR_COLORS   },
+                { name: 'Wings',   sub: '',          color: [16, 185, 129], tbodyId: 'tbody-wings',  columns: WINGS_COLS, headerColors: WINGS_HDR_COLORS },
             ];
 
             for (const sec of sections) {
@@ -1391,11 +1523,13 @@ function createLogoDataURL() {
                 pdfDoc.setTextColor(15, 23, 42);
                 pdfDoc.text(sec.name, margin + 5, y + 3);
 
-                const nameW = pdfDoc.getTextWidth(sec.name);
-                pdfDoc.setFont('helvetica', 'normal');
-                pdfDoc.setFontSize(6);
-                pdfDoc.setTextColor(148, 163, 184);
-                pdfDoc.text(sec.sub, margin + 5 + nameW + 2.5, y + 3);
+                if (sec.sub) {
+                    const nameW = pdfDoc.getTextWidth(sec.name);
+                    pdfDoc.setFont('helvetica', 'normal');
+                    pdfDoc.setFontSize(6);
+                    pdfDoc.setTextColor(148, 163, 184);
+                    pdfDoc.text(sec.sub, margin + 5 + nameW + 2.5, y + 3);
+                }
 
                 y += 7;
 
@@ -1410,7 +1544,7 @@ function createLogoDataURL() {
                 } else {
                     pdfDoc.autoTable({
                         startY: y,
-                        head: [colHeaders],
+                        head: [sec.columns],
                         body: rows,
                         margin: { left: margin, right: margin },
                         tableWidth: contentW,
@@ -1447,7 +1581,7 @@ function createLogoDataURL() {
 
                         didParseCell: function (data) {
                             if (data.section === 'head') {
-                                const map = HDR_COLORS[data.column.index];
+                                const map = sec.headerColors[data.column.index];
                                 if (map) {
                                     data.cell.styles.fillColor = map.fill;
                                     data.cell.styles.textColor = map.text;
