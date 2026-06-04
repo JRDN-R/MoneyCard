@@ -1,1607 +1,3436 @@
 <!DOCTYPE html>
+
 <html lang="en">
-<head> 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E&amp;E MoneyCard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="manifest" href="site.webmanifest">
-    <!-- PDF Export Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>
-
-
-    <style>
-        /* ========================================
-           Custom Properties
-           ======================================== */
-        :root {
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --primary-active: #1d4ed8;
-            --primary-light: rgba(59,130,246,0.08);
-            --primary-ring: rgba(59,130,246,0.25);
-
-            --bg: #f1f5f9;
-            --surface: #ffffff;
-            --surface-hover: #dcdee0;
-
-            --text: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            --text-inverse: #ffffff;
-
-            --border: #e2e8f0;
-            --border-strong: #cbd5e1;
-
-            --danger: #ef4444;
-            --danger-hover: #dc2626;
-            --danger-light: rgba(239,68,68,0.08);
-            --success: #10b981;
-            --success-light: rgba(16,185,129,0.12);
-
-            --accent-usn: #eab308;
-            --accent-usn-bg: rgba(234,179,8,0.07);
-            --accent-usaf: #06b6d4;
-            --accent-usaf-bg: rgba(6,182,212,0.07);
-            --accent-wings: #10b981;
-            --accent-wings-bg: rgba(16,185,129,0.07);
-
-            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
-            --font-anon: 'Anonymous Pro', 'Courier New', Courier, monospace;
-
-            --radius-sm: 6px;
-            --radius: 10px;
-            --radius-lg: 14px;
-            --radius-xl: 20px;
-            --radius-full: 9999px;
-
-            --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
-            --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -4px rgba(0,0,0,0.04);
-            --shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.03);
-            --shadow-xl: 0 25px 50px -12px rgba(0,0,0,0.18);
-
-            --ease: cubic-bezier(0.4, 0, 0.2, 1);
-            --ease-out: cubic-bezier(0, 0, 0.2, 1);
-            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-            --dur-fast: 150ms;
-            --dur: 200ms;
-            --dur-slow: 300ms;
-
-            /* Header-column palette */
-            --hdr-seq:       #F4DC7C;
-            --hdr-ee:        #D4E0C4;
-            --hdr-sales:     #B1D2E5;
-            --hdr-kits:      #D4B1E5;
-            --hdr-repair:    #B1D2E5;
-            --hdr-tms:       #E9B8A5;
-            --hdr-wing-bg:   #191E1E;
-            --hdr-wing-text: #FFFFFF;
-        }
-
-        /* ========================================
-           Reset & Base
-           ======================================== */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html {
-            scroll-behavior: smooth;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        body {
-            font-family: var(--font-sans);
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        :focus-visible {
-            outline: 2px solid var(--primary);
-            outline-offset: 2px;
-        }
-
-        /* ========================================
-           Header
-           ======================================== */
-        .app-header {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            box-shadow: var(--shadow-xs);
-        }
-
-        .header-inner {
-            max-width: 1440px;
-            margin: 0 auto;
-            padding: 0 28px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .header-brand {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .brand-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            background: transparent;
-            overflow: hidden;
-        }
-
-        .brand-icon img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain; 
-        }
-
-        .brand-text h1 {
-            font-size: 1.125rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-        }
-
-        .brand-text p {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .admin-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 14px;
-            background: var(--success-light);
-            color: var(--success);
-            border-radius: var(--radius-full);
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.01em;
-        }
-
-        .admin-badge::before {
-            content: '';
-            width: 7px;
-            height: 7px;
-            background: var(--success);
-            border-radius: 50%;
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
-
-        /* ========================================
-           Buttons
-           ======================================== */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 9px 18px;
-            font-family: var(--font-sans);
-            font-size: 0.8125rem;
-            font-weight: 600;
-            line-height: 1;
-            border: none;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: all var(--dur) var(--ease);
-            white-space: nowrap;
-            user-select: none;
-        }
-
-        .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-        .btn:active { transform: scale(0.97); }
-
-        .btn-primary {
-            background: var(--primary);
-            color: var(--text-inverse);
-            box-shadow: var(--shadow-xs), inset 0 1px 0 rgba(255,255,255,0.12);
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
-            box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.12);
-        }
-
-        .btn-primary:active { background: var(--primary-active); }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1.5px solid var(--border);
-        }
-
-        .btn-outline:hover {
-            background: var(--surface-hover);
-            border-color: var(--border-strong);
-            color: var(--text);
-        }
-
-        .btn-lg {
-            padding: 12px 26px;
-            font-size: 0.875rem;
-            border-radius: var(--radius);
-        }
-
-        .btn-lg svg { width: 18px; height: 18px; }
-
-        /* ========================================
-           Main Content  — Anonymous Pro base font
-           ======================================== */
-        .main-content {
-            max-width: 1440px;
-            margin: 0 auto;
-            padding: 32px 28px 80px;
-            font-family: var(--font-anon);
-        }
-
-        /* ========================================
-           Card
-           ======================================== */
-        .card {
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
-            margin-bottom: 28px;
-        }
-
-        .card-header {
-            padding: 20px 28px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .card-header h2 {
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-        }
-
-        .card-header p {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-            margin-top: 3px;
-        }
-
-        .card-body { padding: 28px; }
-
-        /* ========================================
-           Form
-           ======================================== */
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
-            gap: 18px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .form-group-wide { grid-column: span 2; }
-
-        .form-group label {
-            font-size: 0.6875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-        }
-
-        .form-input,
-        .form-select {
-            padding: 10px 13px;
-            font-family: var(--font-anon);
-            font-size: 0.875rem;
-            color: var(--text);
-            background: var(--surface);
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
-            transition: all var(--dur) var(--ease);
-            width: 100%;
-        }
-
-        .form-input::placeholder { color: var(--text-muted); font-weight: 400; }
-        .form-input:hover, .form-select:hover { border-color: var(--border-strong); }
-
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-ring);
-        }
-
-        .form-select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            padding-right: 36px;
-        }
-
-        .form-actions {
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        /* ========================================
-           Data Sections
-           ======================================== */
-        .data-section {
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
-            margin-bottom: 28px;
-        }
-
-        .section-accent { height: 3px; }
-
-        .accent-usn   { background: linear-gradient(90deg, var(--accent-usn), #facc15); }
-        .accent-usaf  { background: linear-gradient(90deg, var(--accent-usaf), #22d3ee); }
-        .accent-wings { background: linear-gradient(90deg, var(--accent-wings), #34d399); }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 28px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .section-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 14px;
-            border-radius: var(--radius-full);
-            font-size: 0.8125rem;
-            font-weight: 700;
-            letter-spacing: 0.015em;
-        }
-
-        .badge-usn  { background: var(--accent-usn-bg); color: #92400e; border: 1px solid rgba(234,179,8,0.18); }
-        .badge-usaf { background: var(--accent-usaf-bg); color: #0e7490; border: 1px solid rgba(6,182,212,0.18); }
-
-        .section-label {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        /* ========================================
-           Aircraft Section Headers (New SVG Layout)
-           ======================================== */
-        .aircraft-header {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-            padding: 20px 28px;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface);
-        }
-
-        .aircraft-graphic {
-            height: 50px;
-            display: flex;
-            align-items: center;
-        }
-
-        .aircraft-graphic img {
-            height: 100%;
-            width: auto;
-            object-fit: contain;
-        }
-
-        .aircraft-title {
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-            font-family: var(--font-sans);
-        }
-
-        .title-main {
-            font-size: 2.25rem;
-            font-weight: 700;
-            line-height: 1;
-            letter-spacing: -0.02em;
-            color: var(--text);
-        }
-
-        .title-sub {
-            font-size: 1.0rem;
-            font-weight: 400;
-            color: var(--text);
-        }
-
-        .title-branch {
-            font-size: 1.0rem;
-            font-weight: 400;
-            color: var(--text-muted);
-        }
-
-        @media (max-width: 768px) {
-            .aircraft-header { gap: 16px; padding: 16px; }
-            .aircraft-graphic { height: 36px; }
-            .title-main { font-size: 2rem; }
-            .title-sub, .title-branch { font-size: 1.1rem; }
-        }
-
-        /* ========================================
-           Skeleton Loader
-           ======================================== */
-        @keyframes skeleton-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        .skeleton-row td {
-            pointer-events: none;
-        }
-
-        .skeleton-row td span {
-            display: block;
-            height: 18px;
-            background: var(--border-strong);
-            border-radius: var(--radius-sm);
-            animation: skeleton-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        /* ========================================
-           Table
-           ======================================== */
-        .table-scroll {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        body.logged-in .table-scroll { padding-right: 44px; }
-
-        .table-scroll::-webkit-scrollbar { height: 6px; }
-        .table-scroll::-webkit-scrollbar-track { background: transparent; }
-        .table-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
-        .table-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 920px;
-        }
-
-        th {
-            font-family: var(--font-anon);
-            font-size: 0.6875rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #000000;
-            padding: 11px 18px;
-            text-align: left;
-            background: var(--surface-hover);
-            border-bottom: 1.5px solid var(--border);
-            white-space: nowrap;
-        }
-
-        td {
-            font-family: var(--font-anon);
-            font-size: 1.0525rem;
-            font-weight: 400;
-            padding: 8px 12px;
-            color: var(--text);
-            border-bottom: 1px solid var(--border);
-            white-space: nowrap;
-            transition: background-color var(--dur-fast) var(--ease);
-        }
-
-        tbody tr:last-child td { border-bottom: none; }
-        tbody tr:hover td { background-color: var(--surface-hover); }
-
-        th.group-end, td.group-end {
-            border-right: 2px solid var(--border-strong);
-        }
-
-        /* ========================================
-           Header-Cell Color Coding
-           ======================================== */
-        thead th:nth-child(1),
-        thead th:nth-child(2) {
-            background: var(--hdr-seq);
-            color: #000000;
-        }
-
-        thead th:nth-child(3) {
-            background: var(--hdr-ee);
-            color: #000000;
-        }
-
-        thead th:nth-child(4),
-        thead th:nth-child(5) {
-            background: var(--hdr-sales);
-            color: #000000;
-        }
-
-        thead th:nth-child(6),
-        thead th:nth-child(7) {
-            background: var(--hdr-kits);
-            color: #000000;
-        }
-
-        thead th:nth-child(8) {
-            background: var(--hdr-repair);
-            color: #000000;
-        }
-
-        thead th:nth-child(9) {
-            background: var(--hdr-tms);
-            color: #000000;
-        }
-
-        thead th:nth-child(10) {
-            background: var(--hdr-wing-bg);
-            color: var(--hdr-wing-text);
-        }
-
-        /* ========================================
-           Wings table — custom column structure
-           (overrides the generic nth-child coloring above)
-           ======================================== */
-        #table-wings thead th:nth-child(1) {
-            background: var(--hdr-wing-bg);
-            color: var(--hdr-wing-text);
-        }
-
-        #table-wings thead th:nth-child(2),
-        #table-wings thead th:nth-child(3) {
-            background: var(--hdr-seq);
-            color: #000000;
-        }
-
-        #table-wings thead th:nth-child(4) {
-            background: var(--hdr-ee);
-            color: #000000;
-        }
-
-        #table-wings thead th:nth-child(5),
-        #table-wings thead th:nth-child(6),
-        #table-wings thead th:nth-child(7) {
-            background: var(--hdr-sales);
-            color: #000000;
-        }
-
-        #table-wings thead th:nth-child(8) {
-            background: var(--hdr-tms);
-            color: #000000;
-        }
-
-        /* ========================================
-           Interactive Cells
-           ======================================== */
-        body.logged-in .editable-cell:hover {
-            background-color: var(--primary-light) !important;
-            cursor: text;
-            outline: 2px solid var(--primary);
-            outline-offset: -2px;
-            border-radius: 2px;
-        }
-
-        [contenteditable="true"] {
-            outline: 2px solid var(--primary) !important;
-            outline-offset: -2px;
-            background-color: var(--primary-light) !important;
-            border-radius: 2px;
-            caret-color: var(--primary);
-        }
-
-        body.logged-out .editable-cell { cursor: pointer; }
-        body.logged-out .editable-cell:hover { background-color: var(--surface-hover); }
-
-        .copied-flash { background-color: #d1fae5 !important; }
-
-        /* ========================================
-           Delete Button
-           ======================================== */
-        .relative-cell { position: relative; }
-
-        .delete-btn {
-            position: absolute;
-            right: -36px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 26px;
-            height: 26px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--danger-light);
-            color: var(--danger);
-            border: 1px solid transparent;
-            border-radius: var(--radius-sm);
-            font-family: var(--font-sans);
-            font-size: 0.75rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all var(--dur) var(--ease);
-            padding: 0;
-            line-height: 1;
-            z-index: 10;
-        }
-
-        .delete-btn:hover {
-            background: var(--danger);
-            color: white;
-            border-color: var(--danger-hover);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .delete-btn:active { transform: translateY(-50%) scale(0.9); }
-
-        /* ========================================
-           Modal
-           ======================================== */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            inset: 0;
-        }
-
-        .modal-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(15,23,42,0.45);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-        }
-
-        .modal-content {
-            position: relative;
-            background: var(--surface);
-            width: calc(100% - 32px);
-            max-width: 420px;
-            margin: 0 auto;
-            top: 50%;
-            transform: translateY(-50%);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-            padding: 36px;
-            animation: modal-enter var(--dur-slow) var(--ease-bounce);
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 18px;
-            right: 18px;
-            width: 34px;
-            height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-            border: none;
-            border-radius: var(--radius-sm);
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all var(--dur) var(--ease);
-        }
-
-        .modal-close:hover { background: var(--bg); color: var(--text); }
-        .modal-close svg { width: 18px; height: 18px; }
-
-        .modal-icon {
-            width: 52px;
-            height: 52px;
-            background: var(--primary-light);
-            color: var(--primary);
-            border-radius: var(--radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 18px;
-        }
-
-        .modal-icon svg { width: 24px; height: 24px; }
-
-        .modal-title {
-            font-size: 1.1875rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            margin-bottom: 4px;
-        }
-
-        .modal-subtitle {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-            margin-bottom: 28px;
-            line-height: 1.5;
-        }
-
-        .modal-form .form-group { margin-bottom: 16px; }
-        .modal-form .form-input { padding: 11px 14px; }
-
-        .modal-form .btn {
-            width: 100%;
-            padding: 12px;
-            font-size: 0.9375rem;
-            margin-top: 8px;
-            border-radius: var(--radius);
-        }
-
-        #loginError {
-            display: none;
-            margin-top: 16px;
-            padding: 11px 16px;
-            background: var(--danger-light);
-            color: var(--danger);
-            border: 1px solid rgba(239,68,68,0.15);
-            border-radius: var(--radius);
-            font-size: 0.8125rem;
-            font-weight: 500;
-            text-align: center;
-        }
-
-        /* ========================================
-           Toast
-           ======================================== */
-        #toast {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            transform: translateY(calc(100% + 48px));
-            background: #166534;
-            color: var(--text-inverse);
-            padding: 11px 22px;
-            border-radius: var(--radius-full);
-            font-family: var(--font-sans);
-            font-size: 0.8125rem;
-            font-weight: 600;
-            box-shadow: var(--shadow-lg);
-            transition: transform var(--dur-slow) var(--ease-bounce);
-            z-index: 200;
-            white-space: nowrap;
-            pointer-events: none;
-        }
-
-        #toast.show { transform: translateY(0); }
-
-        /* ========================================
-           Auth State Toggles
-           ======================================== */
-        body.logged-out .admin-only { display: none !important; }
-        body.logged-in  .public-only { display: none !important; }
-
-        /* ========================================
-           Animations
-           ======================================== */
-        @keyframes modal-enter {
-            from { opacity: 0; transform: translateY(calc(-50% + 16px)) scale(0.96); }
-            to   { opacity: 1; transform: translateY(-50%) scale(1); }
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; }
-            50%      { opacity: 0.35; }
-        }
-
-        /* ========================================
-           Responsive
-           ======================================== */
-        @media (max-width: 768px) {
-            .header-inner   { height: 56px; padding: 0 16px; }
-            .brand-text p   { display: none; }
-            .brand-text h1  { font-size: 1rem; }
-            .brand-icon     { width: 36px; height: 36px; }
-            .main-content   { padding: 20px 12px 60px; }
-            .card-body      { padding: 20px 16px; }
-            .card-header    { padding: 16px; }
-            .section-header { padding: 12px 16px; }
-            .form-grid      { grid-template-columns: 1fr 1fr; gap: 14px; }
-            .form-group-wide { grid-column: span 2; }
-            th, td          { padding: 10px 14px; }
-            .modal-content  { padding: 28px 24px; }
-        }
-
-        @media (max-width: 480px) {
-            .form-grid       { grid-template-columns: 1fr; }
-            .form-group-wide { grid-column: span 1; }
-        }
-    </style>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>E&amp;E MoneyCard</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+
+<link rel="manifest" href="site.webmanifest">
+
+<!-- PDF Export Libraries -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.0.3/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.2/jspdf.plugin.autotable.min.js"></script>
+
+<!-- Drag & Drop Row Sorting -->
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js"></script>
+
+
+
+
+
+<style>
+
+/* ========================================
+
+Custom Properties
+
+======================================== */
+
+:root {
+
+--primary: #3b82f6;
+
+--primary-hover: #2563eb;
+
+--primary-active: #1d4ed8;
+
+--primary-light: rgba(59,130,246,0.08);
+
+--primary-ring: rgba(59,130,246,0.25);
+
+
+
+--bg: #f1f5f9;
+
+--surface: #ffffff;
+
+--surface-hover: #dcdee0;
+
+
+
+--text: #0f172a;
+
+--text-secondary: #475569;
+
+--text-muted: #94a3b8;
+
+--text-inverse: #ffffff;
+
+
+
+--border: #e2e8f0;
+
+--border-strong: #cbd5e1;
+
+
+
+--danger: #ef4444;
+
+--danger-hover: #dc2626;
+
+--danger-light: rgba(239,68,68,0.08);
+
+--success: #10b981;
+
+--success-light: rgba(16,185,129,0.12);
+
+
+
+--accent-usn: #eab308;
+
+--accent-usn-bg: rgba(234,179,8,0.07);
+
+--accent-usaf: #06b6d4;
+
+--accent-usaf-bg: rgba(6,182,212,0.07);
+
+--accent-wings: #10b981;
+
+--accent-wings-bg: rgba(16,185,129,0.07);
+
+
+
+--font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+--font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+
+--font-anon: 'Anonymous Pro', 'Courier New', Courier, monospace;
+
+
+
+--radius-sm: 6px;
+
+--radius: 10px;
+
+--radius-lg: 14px;
+
+--radius-xl: 20px;
+
+--radius-full: 9999px;
+
+
+
+--shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+
+--shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+
+--shadow: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+
+--shadow-md: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -4px rgba(0,0,0,0.04);
+
+--shadow-lg: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.03);
+
+--shadow-xl: 0 25px 50px -12px rgba(0,0,0,0.18);
+
+
+
+--ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+--ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+--ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+--dur-fast: 150ms;
+
+--dur: 200ms;
+
+--dur-slow: 300ms;
+
+
+
+/* Header-column palette */
+
+--hdr-seq: #F4DC7C;
+
+--hdr-ee: #D4E0C4;
+
+--hdr-sales: #B1D2E5;
+
+--hdr-kits: #D4B1E5;
+
+--hdr-repair: #B1D2E5;
+
+--hdr-tms: #E9B8A5;
+
+--hdr-wing-bg: #191E1E;
+
+--hdr-wing-text: #FFFFFF;
+
+}
+
+
+
+/* ========================================
+
+Reset & Base
+
+======================================== */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+
+
+html {
+
+scroll-behavior: smooth;
+
+-webkit-font-smoothing: antialiased;
+
+-moz-osx-font-smoothing: grayscale;
+
+}
+
+
+
+body {
+
+font-family: var(--font-sans);
+
+background: var(--bg);
+
+color: var(--text);
+
+line-height: 1.6;
+
+min-height: 100vh;
+
+overflow-x: hidden;
+
+}
+
+
+
+:focus-visible {
+
+outline: 2px solid var(--primary);
+
+outline-offset: 2px;
+
+}
+
+
+
+/* ========================================
+
+Header
+
+======================================== */
+
+.app-header {
+
+background: var(--surface);
+
+border-bottom: 1px solid var(--border);
+
+position: sticky;
+
+top: 0;
+
+z-index: 50;
+
+box-shadow: var(--shadow-xs);
+
+}
+
+
+
+.header-inner {
+
+max-width: 1440px;
+
+margin: 0 auto;
+
+padding: 0 28px;
+
+height: 64px;
+
+display: flex;
+
+align-items: center;
+
+justify-content: space-between;
+
+}
+
+
+
+.header-brand {
+
+display: flex;
+
+align-items: center;
+
+gap: 14px;
+
+}
+
+
+
+.brand-icon {
+
+width: 64px;
+
+height: 64px;
+
+border-radius: 50%;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+flex-shrink: 0;
+
+box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+
+background: transparent;
+
+overflow: hidden;
+
+}
+
+
+
+.brand-icon img {
+
+width: 100%;
+
+height: 100%;
+
+object-fit: contain;
+
+}
+
+
+
+.brand-text h1 {
+
+font-size: 1.125rem;
+
+font-weight: 700;
+
+letter-spacing: -0.02em;
+
+line-height: 1.2;
+
+}
+
+
+
+.brand-text p {
+
+font-size: 0.7rem;
+
+color: var(--text-muted);
+
+font-weight: 600;
+
+letter-spacing: 0.04em;
+
+text-transform: uppercase;
+
+}
+
+
+
+.header-actions {
+
+display: flex;
+
+align-items: center;
+
+gap: 10px;
+
+}
+
+
+
+.admin-badge {
+
+display: inline-flex;
+
+align-items: center;
+
+gap: 6px;
+
+padding: 5px 14px;
+
+background: var(--success-light);
+
+color: var(--success);
+
+border-radius: var(--radius-full);
+
+font-size: 0.75rem;
+
+font-weight: 600;
+
+letter-spacing: 0.01em;
+
+}
+
+
+
+.admin-badge::before {
+
+content: '';
+
+width: 7px;
+
+height: 7px;
+
+background: var(--success);
+
+border-radius: 50%;
+
+animation: pulse-dot 2s ease-in-out infinite;
+
+}
+
+
+
+/* ========================================
+
+Buttons
+
+======================================== */
+
+.btn {
+
+display: inline-flex;
+
+align-items: center;
+
+justify-content: center;
+
+gap: 8px;
+
+padding: 9px 18px;
+
+font-family: var(--font-sans);
+
+font-size: 0.8125rem;
+
+font-weight: 600;
+
+line-height: 1;
+
+border: none;
+
+border-radius: var(--radius-sm);
+
+cursor: pointer;
+
+transition: all var(--dur) var(--ease);
+
+white-space: nowrap;
+
+user-select: none;
+
+}
+
+
+
+.btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+.btn:active { transform: scale(0.97); }
+
+
+
+.btn-primary {
+
+background: var(--primary);
+
+color: var(--text-inverse);
+
+box-shadow: var(--shadow-xs), inset 0 1px 0 rgba(255,255,255,0.12);
+
+}
+
+
+
+.btn-primary:hover {
+
+background: var(--primary-hover);
+
+box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.12);
+
+}
+
+
+
+.btn-primary:active { background: var(--primary-active); }
+
+
+
+.btn-outline {
+
+background: transparent;
+
+color: var(--text-secondary);
+
+border: 1.5px solid var(--border);
+
+}
+
+
+
+.btn-outline:hover {
+
+background: var(--surface-hover);
+
+border-color: var(--border-strong);
+
+color: var(--text);
+
+}
+
+
+
+.btn-lg {
+
+padding: 12px 26px;
+
+font-size: 0.875rem;
+
+border-radius: var(--radius);
+
+}
+
+
+
+.btn-lg svg { width: 18px; height: 18px; }
+
+
+
+/* ========================================
+
+Main Content — Anonymous Pro base font
+
+======================================== */
+
+.main-content {
+
+max-width: 1440px;
+
+margin: 0 auto;
+
+padding: 32px 28px 80px;
+
+font-family: var(--font-anon);
+
+}
+
+
+
+/* ========================================
+
+Card
+
+======================================== */
+
+.card {
+
+background: var(--surface);
+
+border-radius: var(--radius-lg);
+
+border: 1px solid var(--border);
+
+box-shadow: var(--shadow-sm);
+
+overflow: hidden;
+
+margin-bottom: 28px;
+
+}
+
+
+
+.card-header {
+
+padding: 20px 28px;
+
+border-bottom: 1px solid var(--border);
+
+}
+
+
+
+.card-header h2 {
+
+font-size: 1rem;
+
+font-weight: 700;
+
+letter-spacing: -0.01em;
+
+}
+
+
+
+.card-header p {
+
+font-size: 0.8125rem;
+
+color: var(--text-muted);
+
+margin-top: 3px;
+
+}
+
+
+
+.card-body { padding: 28px; }
+
+
+
+/* ========================================
+
+Form
+
+======================================== */
+
+.form-grid {
+
+display: grid;
+
+grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+
+gap: 18px;
+
+}
+
+
+
+.form-group {
+
+display: flex;
+
+flex-direction: column;
+
+gap: 5px;
+
+}
+
+
+
+.form-group-wide { grid-column: span 2; }
+
+
+
+.form-group label {
+
+font-size: 0.6875rem;
+
+font-weight: 600;
+
+text-transform: uppercase;
+
+letter-spacing: 0.05em;
+
+color: var(--text-muted);
+
+}
+
+
+
+.form-input,
+
+.form-select {
+
+padding: 10px 13px;
+
+font-family: var(--font-anon);
+
+font-size: 0.875rem;
+
+color: var(--text);
+
+background: var(--surface);
+
+border: 1.5px solid var(--border);
+
+border-radius: var(--radius-sm);
+
+transition: all var(--dur) var(--ease);
+
+width: 100%;
+
+}
+
+
+
+.form-input::placeholder { color: var(--text-muted); font-weight: 400; }
+
+.form-input:hover, .form-select:hover { border-color: var(--border-strong); }
+
+
+
+.form-input:focus,
+
+.form-select:focus {
+
+outline: none;
+
+border-color: var(--primary);
+
+box-shadow: 0 0 0 3px var(--primary-ring);
+
+}
+
+
+
+.form-select {
+
+cursor: pointer;
+
+appearance: none;
+
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+background-repeat: no-repeat;
+
+background-position: right 10px center;
+
+padding-right: 36px;
+
+}
+
+
+
+.form-actions {
+
+margin-top: 24px;
+
+padding-top: 24px;
+
+border-top: 1px solid var(--border);
+
+display: flex;
+
+justify-content: flex-end;
+
+}
+
+
+
+/* ========================================
+
+Data Sections
+
+======================================== */
+
+.data-section {
+
+background: var(--surface);
+
+border-radius: var(--radius-lg);
+
+border: 1px solid var(--border);
+
+box-shadow: var(--shadow-sm);
+
+overflow: hidden;
+
+margin-bottom: 28px;
+
+}
+
+
+
+.section-accent { height: 3px; }
+
+
+
+.accent-usn { background: linear-gradient(90deg, var(--accent-usn), #facc15); }
+
+.accent-usaf { background: linear-gradient(90deg, var(--accent-usaf), #22d3ee); }
+
+.accent-wings { background: linear-gradient(90deg, var(--accent-wings), #34d399); }
+
+
+
+.section-header {
+
+display: flex;
+
+align-items: center;
+
+gap: 12px;
+
+padding: 14px 28px;
+
+border-bottom: 1px solid var(--border);
+
+}
+
+
+
+.section-badge {
+
+display: inline-flex;
+
+align-items: center;
+
+padding: 5px 14px;
+
+border-radius: var(--radius-full);
+
+font-size: 0.8125rem;
+
+font-weight: 700;
+
+letter-spacing: 0.015em;
+
+}
+
+
+
+.badge-usn { background: var(--accent-usn-bg); color: #92400e; border: 1px solid rgba(234,179,8,0.18); }
+
+.badge-usaf { background: var(--accent-usaf-bg); color: #0e7490; border: 1px solid rgba(6,182,212,0.18); }
+
+
+
+.section-label {
+
+font-size: 0.8125rem;
+
+color: var(--text-muted);
+
+font-weight: 500;
+
+}
+
+
+
+/* ========================================
+
+Aircraft Section Headers (New SVG Layout)
+
+======================================== */
+
+.aircraft-header {
+
+display: flex;
+
+align-items: center;
+
+gap: 24px;
+
+padding: 20px 28px;
+
+border-bottom: 1px solid var(--border);
+
+background: var(--surface);
+
+}
+
+
+
+.aircraft-graphic {
+
+height: 50px;
+
+display: flex;
+
+align-items: center;
+
+}
+
+
+
+.aircraft-graphic img {
+
+height: 100%;
+
+width: auto;
+
+object-fit: contain;
+
+}
+
+
+
+.aircraft-title {
+
+display: flex;
+
+align-items: baseline;
+
+gap: 10px;
+
+font-family: var(--font-sans);
+
+}
+
+
+
+.title-main {
+
+font-size: 2.25rem;
+
+font-weight: 700;
+
+line-height: 1;
+
+letter-spacing: -0.02em;
+
+color: var(--text);
+
+}
+
+
+
+.title-sub {
+
+font-size: 1.0rem;
+
+font-weight: 400;
+
+color: var(--text);
+
+}
+
+
+
+.title-branch {
+
+font-size: 1.0rem;
+
+font-weight: 400;
+
+color: var(--text-muted);
+
+}
+
+
+
+@media (max-width: 768px) {
+
+.aircraft-header { gap: 16px; padding: 16px; }
+
+.aircraft-graphic { height: 36px; }
+
+.title-main { font-size: 2rem; }
+
+.title-sub, .title-branch { font-size: 1.1rem; }
+
+}
+
+
+
+/* ========================================
+
+Skeleton Loader
+
+======================================== */
+
+@keyframes skeleton-pulse {
+
+0%, 100% { opacity: 1; }
+
+50% { opacity: 0.4; }
+
+}
+
+
+
+.skeleton-row td {
+
+pointer-events: none;
+
+}
+
+
+
+.skeleton-row td span {
+
+display: block;
+
+height: 18px;
+
+background: var(--border-strong);
+
+border-radius: var(--radius-sm);
+
+animation: skeleton-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+}
+
+
+
+/* ========================================
+
+Table
+
+======================================== */
+
+.table-scroll {
+
+overflow-x: auto;
+
+-webkit-overflow-scrolling: touch;
+
+}
+
+
+
+body.logged-in .table-scroll { padding-left: 40px; padding-right: 44px; }
+
+
+
+.table-scroll::-webkit-scrollbar { height: 6px; }
+
+.table-scroll::-webkit-scrollbar-track { background: transparent; }
+
+.table-scroll::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+.table-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+
+
+table {
+
+width: 100%;
+
+border-collapse: collapse;
+
+min-width: 920px;
+
+}
+
+
+
+th {
+
+font-family: var(--font-anon);
+
+font-size: 0.6875rem;
+
+font-weight: 700;
+
+text-transform: uppercase;
+
+letter-spacing: 0.06em;
+
+color: #000000;
+
+padding: 11px 18px;
+
+text-align: left;
+
+background: var(--surface-hover);
+
+border-bottom: 1.5px solid var(--border);
+
+white-space: nowrap;
+
+}
+
+
+
+td {
+
+font-family: var(--font-anon);
+
+font-size: 1.0525rem;
+
+font-weight: 400;
+
+padding: 8px 12px;
+
+color: var(--text);
+
+border-bottom: 1px solid var(--border);
+
+white-space: nowrap;
+
+transition: background-color var(--dur-fast) var(--ease);
+
+}
+
+
+
+tbody tr:last-child td { border-bottom: none; }
+
+tbody tr:hover td { background-color: var(--surface-hover); }
+
+
+
+th.group-end, td.group-end {
+
+border-right: 2px solid var(--border-strong);
+
+}
+
+
+
+/* ========================================
+
+Header-Cell Color Coding
+
+======================================== */
+
+thead th:nth-child(1),
+
+thead th:nth-child(2) {
+
+background: var(--hdr-seq);
+
+color: #000000;
+
+}
+
+
+
+thead th:nth-child(3) {
+
+background: var(--hdr-ee);
+
+color: #000000;
+
+}
+
+
+
+thead th:nth-child(4),
+
+thead th:nth-child(5) {
+
+background: var(--hdr-sales);
+
+color: #000000;
+
+}
+
+
+
+thead th:nth-child(6),
+
+thead th:nth-child(7) {
+
+background: var(--hdr-kits);
+
+color: #000000;
+
+}
+
+
+
+thead th:nth-child(8) {
+
+background: var(--hdr-repair);
+
+color: #000000;
+
+}
+
+
+
+thead th:nth-child(9) {
+
+background: var(--hdr-tms);
+
+color: #000000;
+
+}
+
+
+
+thead th:nth-child(10) {
+
+background: var(--hdr-wing-bg);
+
+color: var(--hdr-wing-text);
+
+}
+
+
+
+/* ========================================
+
+Wings table — custom column structure
+
+(overrides the generic nth-child coloring above)
+
+======================================== */
+
+#table-wings thead th:nth-child(1) {
+
+background: var(--hdr-wing-bg);
+
+color: var(--hdr-wing-text);
+
+}
+
+
+
+#table-wings thead th:nth-child(2),
+
+#table-wings thead th:nth-child(3) {
+
+background: var(--hdr-seq);
+
+color: #000000;
+
+}
+
+
+
+#table-wings thead th:nth-child(4) {
+
+background: var(--hdr-ee);
+
+color: #000000;
+
+}
+
+
+
+#table-wings thead th:nth-child(5),
+
+#table-wings thead th:nth-child(6),
+
+#table-wings thead th:nth-child(7) {
+
+background: var(--hdr-sales);
+
+color: #000000;
+
+}
+
+
+
+#table-wings thead th:nth-child(8) {
+
+background: var(--hdr-tms);
+
+color: #000000;
+
+}
+
+
+
+/* ========================================
+
+Interactive Cells
+
+======================================== */
+
+body.logged-in .editable-cell:hover {
+
+background-color: var(--primary-light) !important;
+
+cursor: text;
+
+outline: 2px solid var(--primary);
+
+outline-offset: -2px;
+
+border-radius: 2px;
+
+}
+
+
+
+[contenteditable="true"] {
+
+outline: 2px solid var(--primary) !important;
+
+outline-offset: -2px;
+
+background-color: var(--primary-light) !important;
+
+border-radius: 2px;
+
+caret-color: var(--primary);
+
+}
+
+
+
+body.logged-out .editable-cell { cursor: pointer; }
+
+body.logged-out .editable-cell:hover { background-color: var(--surface-hover); }
+
+
+
+.copied-flash { background-color: #d1fae5 !important; }
+
+
+
+/* ========================================
+
+Drag Handle & Row Sorting (admin only)
+
+======================================== */
+
+.drag-cell { position: relative; }
+
+
+
+.drag-handle {
+
+position: absolute;
+
+left: -34px;
+
+top: 50%;
+
+transform: translateY(-50%);
+
+width: 26px;
+
+height: 26px;
+
+display: inline-flex;
+
+align-items: center;
+
+justify-content: center;
+
+color: var(--text-muted);
+
+background: var(--surface);
+
+border: 1px solid var(--border);
+
+border-radius: var(--radius-sm);
+
+cursor: grab;
+
+z-index: 10;
+
+user-select: none;
+
+-webkit-user-select: none;
+
+touch-action: none;
+
+transition: color var(--dur) var(--ease),
+
+border-color var(--dur) var(--ease),
+
+background-color var(--dur) var(--ease);
+
+}
+
+
+
+.drag-handle:hover {
+
+color: var(--primary);
+
+border-color: var(--primary);
+
+background: var(--primary-light);
+
+}
+
+
+
+.drag-handle:active { cursor: grabbing; }
+
+.drag-handle svg { width: 15px; height: 15px; pointer-events: none; display: block; }
+
+
+
+/* SortableJS state classes */
+
+.row-ghost { opacity: 0.4; }
+
+.row-ghost td { background: var(--primary-light) !important; }
+
+.row-chosen td { background: var(--surface-hover); }
+
+.row-drag {
+
+box-shadow: var(--shadow-lg);
+
+cursor: grabbing;
+
+}
+
+
+
+/* ========================================
+
+Delete Button
+
+======================================== */
+
+.relative-cell { position: relative; }
+
+
+
+.delete-btn {
+
+position: absolute;
+
+right: -36px;
+
+top: 50%;
+
+transform: translateY(-50%);
+
+width: 26px;
+
+height: 26px;
+
+display: inline-flex;
+
+align-items: center;
+
+justify-content: center;
+
+background: var(--danger-light);
+
+color: var(--danger);
+
+border: 1px solid transparent;
+
+border-radius: var(--radius-sm);
+
+font-family: var(--font-sans);
+
+font-size: 0.75rem;
+
+font-weight: 700;
+
+cursor: pointer;
+
+transition: all var(--dur) var(--ease);
+
+padding: 0;
+
+line-height: 1;
+
+z-index: 10;
+
+}
+
+
+
+.delete-btn:hover {
+
+background: var(--danger);
+
+color: white;
+
+border-color: var(--danger-hover);
+
+box-shadow: var(--shadow-sm);
+
+}
+
+
+
+.delete-btn:active { transform: translateY(-50%) scale(0.9); }
+
+
+
+/* ========================================
+
+Modal
+
+======================================== */
+
+.modal {
+
+display: none;
+
+position: fixed;
+
+z-index: 100;
+
+inset: 0;
+
+}
+
+
+
+.modal-overlay {
+
+position: absolute;
+
+inset: 0;
+
+background: rgba(15,23,42,0.45);
+
+backdrop-filter: blur(6px);
+
+-webkit-backdrop-filter: blur(6px);
+
+}
+
+
+
+.modal-content {
+
+position: relative;
+
+background: var(--surface);
+
+width: calc(100% - 32px);
+
+max-width: 420px;
+
+margin: 0 auto;
+
+top: 50%;
+
+transform: translateY(-50%);
+
+border-radius: var(--radius-xl);
+
+box-shadow: var(--shadow-xl);
+
+padding: 36px;
+
+animation: modal-enter var(--dur-slow) var(--ease-bounce);
+
+}
+
+
+
+.modal-close {
+
+position: absolute;
+
+top: 18px;
+
+right: 18px;
+
+width: 34px;
+
+height: 34px;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+background: transparent;
+
+border: none;
+
+border-radius: var(--radius-sm);
+
+color: var(--text-muted);
+
+cursor: pointer;
+
+transition: all var(--dur) var(--ease);
+
+}
+
+
+
+.modal-close:hover { background: var(--bg); color: var(--text); }
+
+.modal-close svg { width: 18px; height: 18px; }
+
+
+
+.modal-icon {
+
+width: 52px;
+
+height: 52px;
+
+background: var(--primary-light);
+
+color: var(--primary);
+
+border-radius: var(--radius-lg);
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+margin-bottom: 18px;
+
+}
+
+
+
+.modal-icon svg { width: 24px; height: 24px; }
+
+
+
+.modal-title {
+
+font-size: 1.1875rem;
+
+font-weight: 700;
+
+letter-spacing: -0.01em;
+
+margin-bottom: 4px;
+
+}
+
+
+
+.modal-subtitle {
+
+font-size: 0.8125rem;
+
+color: var(--text-muted);
+
+margin-bottom: 28px;
+
+line-height: 1.5;
+
+}
+
+
+
+.modal-form .form-group { margin-bottom: 16px; }
+
+.modal-form .form-input { padding: 11px 14px; }
+
+
+
+.modal-form .btn {
+
+width: 100%;
+
+padding: 12px;
+
+font-size: 0.9375rem;
+
+margin-top: 8px;
+
+border-radius: var(--radius);
+
+}
+
+
+
+#loginError {
+
+display: none;
+
+margin-top: 16px;
+
+padding: 11px 16px;
+
+background: var(--danger-light);
+
+color: var(--danger);
+
+border: 1px solid rgba(239,68,68,0.15);
+
+border-radius: var(--radius);
+
+font-size: 0.8125rem;
+
+font-weight: 500;
+
+text-align: center;
+
+}
+
+
+
+/* ========================================
+
+Toast
+
+======================================== */
+
+#toast {
+
+position: fixed;
+
+bottom: 28px;
+
+right: 28px;
+
+transform: translateY(calc(100% + 48px));
+
+background: #166534;
+
+color: var(--text-inverse);
+
+padding: 11px 22px;
+
+border-radius: var(--radius-full);
+
+font-family: var(--font-sans);
+
+font-size: 0.8125rem;
+
+font-weight: 600;
+
+box-shadow: var(--shadow-lg);
+
+transition: transform var(--dur-slow) var(--ease-bounce);
+
+z-index: 200;
+
+white-space: nowrap;
+
+pointer-events: none;
+
+}
+
+
+
+#toast.show { transform: translateY(0); }
+
+
+
+/* ========================================
+
+Auth State Toggles
+
+======================================== */
+
+body.logged-out .admin-only { display: none !important; }
+
+body.logged-in .public-only { display: none !important; }
+
+
+
+/* ========================================
+
+Animations
+
+======================================== */
+
+@keyframes modal-enter {
+
+from { opacity: 0; transform: translateY(calc(-50% + 16px)) scale(0.96); }
+
+to { opacity: 1; transform: translateY(-50%) scale(1); }
+
+}
+
+
+
+@keyframes pulse-dot {
+
+0%, 100% { opacity: 1; }
+
+50% { opacity: 0.35; }
+
+}
+
+
+
+/* ========================================
+
+Responsive
+
+======================================== */
+
+@media (max-width: 768px) {
+
+.header-inner { height: 56px; padding: 0 16px; }
+
+.brand-text p { display: none; }
+
+.brand-text h1 { font-size: 1rem; }
+
+.brand-icon { width: 36px; height: 36px; }
+
+.main-content { padding: 20px 12px 60px; }
+
+.card-body { padding: 20px 16px; }
+
+.card-header { padding: 16px; }
+
+.section-header { padding: 12px 16px; }
+
+.form-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.form-group-wide { grid-column: span 2; }
+
+th, td { padding: 10px 14px; }
+
+.modal-content { padding: 28px 24px; }
+
+}
+
+
+
+@media (max-width: 480px) {
+
+.form-grid { grid-template-columns: 1fr; }
+
+.form-group-wide { grid-column: span 1; }
+
+}
+
+</style>
+
 </head>
+
+
 
 <body class="logged-out">
 
-    <div id="toast">Copied!</div>
 
-    <header class="app-header">
-        <div class="header-inner">
-            <div class="header-brand">
-                <div class="brand-icon">
-                    <img src="https://raw.githubusercontent.com/FRCSE-EE/MoneyCard/a3abbb5ab8c29a275a4d0e935ed47139f09b82d3/image-47ce0f45.webp" alt="FRCSE Logo">
-                </div>
-                <div class="brand-text">
-                    <h1>MoneyCard</h1>
-                    <p>TRAINERS E&amp;E 62911</p>
-                </div>
-            </div>
-            <div class="header-actions">
-                <span class="admin-badge admin-only">Admin Mode</span>
 
-                <button id="exportBtn" class="btn btn-outline">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                    Export PDF
-                </button>
+<div id="toast">Copied!</div>
 
-                <button id="editBtn" class="btn btn-primary public-only">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                    Edit Mode
-                </button>
-                <button id="logoutBtn" class="btn btn-outline admin-only">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
-                    Log Out
-                </button>
-            </div>
-        </div>
-    </header>
 
-    <div id="loginModal" class="modal">
-        <div class="modal-overlay"></div>
-        <div class="modal-content">
-            <button class="modal-close" id="closeModal">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-                </svg>
-            </button>
-            <div class="modal-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-            </div>
-            <div class="modal-title">Authorized Access</div>
-            <div class="modal-subtitle">Enter your credentials to manage work orders.</div>
-            <form id="loginForm" class="modal-form">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" class="form-input" placeholder="Enter username" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="Enter password" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Log In</button>
-                <div id="loginError">Invalid username or password. Please try again.</div>
-            </form>
-        </div>
-    </div>
 
-    <main class="main-content" id="appContainer">
+<header class="app-header">
 
-        <div class="card admin-only" id="orderFormContainer">
-            <div class="card-header">
-                <h2>Add New Work Order</h2>
-                <p>Fill in the fields below and submit to create a new entry.</p>
-            </div>
-            <div class="card-body">
-                <form id="orderForm">
-                    <div class="form-grid">
-                        <div class="form-group form-group-wide">
-                            <label for="aircraftType">Aircraft Section</label>
-                            <select id="aircraftType" class="form-select" required>
-                                <option value="" disabled selected>Select aircraft section…</option>
-                                <option value="T-6 USN">T-6 USN (Navy)</option>
-                                <option value="USAF T-6 A/B">USAF T-6 A/B</option>
-                                <option value="Wings">Wings</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="group-serialNo" style="display:none;">
-                            <label for="serialNo">Serial No.</label>
-                            <input type="text" id="serialNo" class="form-input" placeholder="Serial number">
-                        </div>
-                        <div class="form-group">
-                            <label for="seq">SEQ</label>
-                            <input type="text" id="seq" class="form-input" placeholder="e.g. 6C99" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="buno">BUNO</label>
-                            <input type="text" id="buno" class="form-input" placeholder="e.g. 166321" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="eeOrder">E&amp;E Order</label>
-                            <input type="text" id="eeOrder" class="form-input" placeholder="E&E order #">
-                        </div>
-                        <div class="form-group">
-                            <label for="salesOrder">Sales Order</label>
-                            <input type="text" id="salesOrder" class="form-input" placeholder="Sales order #">
-                        </div>
-                        <div class="form-group">
-                            <label for="projectNo1">A/C Project No.</label>
-                            <input type="text" id="projectNo1" class="form-input" placeholder="Project number">
-                        </div>
-                        <div class="form-group" id="group-kitsOrder">
-                            <label for="kitsOrder">Kits Order</label>
-                            <input type="text" id="kitsOrder" class="form-input" placeholder="Kits order #">
-                        </div>
-                        <div class="form-group" id="group-projectNo2">
-                            <label for="projectNo2">Kit Project No.</label>
-                            <input type="text" id="projectNo2" class="form-input" placeholder="Project number">
-                        </div>
-                        <div class="form-group">
-                            <label for="repairId">Repair ID</label>
-                            <input type="text" id="repairId" class="form-input" placeholder="Repair ID">
-                        </div>
-                        <div class="form-group">
-                            <label for="tms">T/M/S</label>
-                            <input type="text" id="tms" class="form-input" placeholder="Type / Model / Series">
-                        </div>
-                        <div class="form-group" id="group-wingSn">
-                            <label for="wingSn">Wing S/N</label>
-                            <input type="text" id="wingSn" class="form-input" placeholder="Wing serial #">
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 5v14M5 12h14"/></svg>
-                            Submit to Database
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<div class="header-inner">
 
-        <section class="data-section">
-            <div class="section-accent accent-usn"></div>
-            <div class="section-header aircraft-header">
-                <div class="aircraft-graphic">
-                    <img src="https://raw.githubusercontent.com/JRDN-R/MoneyCard/391dfe38f632fef40ceea8ead755335957eb0fed/T6USN.svg" alt="T-6 Navy">
-                </div>
-                <div class="aircraft-title">
-                    <span class="title-main">T-6</span>
-                    <span class="title-sub">A/B</span>
-                    <span class="title-branch">(USN)</span>
-                </div>
-            </div>
-            <div class="table-scroll">
-                <table id="table-t6-usn">
-                    <thead><tr>
-                        <th>SEQ</th><th class="group-end">BUNO</th>
-                        <th class="group-end">E&amp;E ORDER</th>
-                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th class="group-end">REPAIR ID</th>
-                        <th class="group-end">T/M/S</th>
-                        <th>WING S/N</th>
-                    </tr></thead>
-                    <tbody id="tbody-t6-usn"></tbody>
-                </table>
-            </div>
-        </section>
+<div class="header-brand">
 
-        <section class="data-section">
-            <div class="section-accent accent-usaf"></div>
-            <div class="section-header aircraft-header">
-                <div class="aircraft-graphic">
-                    <img src="https://raw.githubusercontent.com/JRDN-R/MoneyCard/391dfe38f632fef40ceea8ead755335957eb0fed/T6USAF.svg" alt="T-6 Air Force">
-                </div>
-                <div class="aircraft-title">
-                    <span class="title-main">T-6</span>
-                    <span class="title-sub">A</span>
-                    <span class="title-branch">(USAF)</span>
-                </div>
-            </div>
-            <div class="table-scroll">
-                <table id="table-usaf">
-                    <thead><tr>
-                        <th>SEQ</th><th class="group-end">BUNO</th>
-                        <th class="group-end">E&amp;E ORDER</th>
-                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th class="group-end">REPAIR ID</th>
-                        <th class="group-end">T/M/S</th>
-                        <th>WING S/N</th>
-                    </tr></thead>
-                    <tbody id="tbody-usaf"></tbody>
-                </table>
-            </div>
-        </section>
+<div class="brand-icon">
 
-        <section class="data-section">
-            <div class="section-accent accent-wings"></div>
-            <div class="section-header aircraft-header">
-                <div class="aircraft-title">
-                    <span class="title-main">Wings</span>
-                </div>
-            </div>
-            <div class="table-scroll">
-                <table id="table-wings">
-                    <thead><tr>
-                        <th class="group-end">SERIAL NO.</th>
-                        <th>SEQ</th><th class="group-end">BUNO</th>
-                        <th class="group-end">E&amp;E ORDER</th>
-                        <th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
-                        <th class="group-end">REPAIR ID</th>
-                        <th>T/M/S</th>
-                    </tr></thead>
-                    <tbody id="tbody-wings"></tbody>
-                </table>
-            </div>
-        </section>
+<img src="https://raw.githubusercontent.com/FRCSE-EE/MoneyCard/a3abbb5ab8c29a275a4d0e935ed47139f09b82d3/image-47ce0f45.webp" alt="FRCSE Logo">
 
-    </main>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+<div class="brand-text">
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCgBv4t4llQ0-pfG3wFW8cvaOofzyGL62o",
-            authDomain: "moneycard-frcse.firebaseapp.com",
-            projectId: "moneycard-frcse",
-            storageBucket: "moneycard-frcse.firebasestorage.app",
-            messagingSenderId: "20037122489",
-            appId: "1:20037122489:web:9300ef68c4896a2c071e68"
-        };
+<h1>MoneyCard</h1>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const entriesCollection = collection(db, "workOrders");
+<p>TRAINERS E&amp;E 62911</p>
 
-        const body = document.body;
-        const editBtn = document.getElementById("editBtn");
-        const logoutBtn = document.getElementById("logoutBtn");
-        const loginModal = document.getElementById("loginModal");
-        const closeModal = document.getElementById("closeModal");
-        const loginForm = document.getElementById("loginForm");
-        const loginError = document.getElementById("loginError");
-        const toast = document.getElementById("toast");
-        const exportBtn = document.getElementById("exportBtn");
+</div>
 
-        const orderForm = document.getElementById("orderForm");
-        const tbodyT6Usn = document.getElementById("tbody-t6-usn");
-        const tbodyUsaf = document.getElementById("tbody-usaf");
-        const tbodyWings = document.getElementById("tbody-wings");
+</div>
 
-        // --- UTILITY ---
-        function getTextWithoutButton(cell) {
-            let text = "";
-            for (let node of cell.childNodes) {
-                if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('delete-btn')) continue;
-                text += node.textContent;
-            }
-            return text.trim();
-        }
+<div class="header-actions">
 
-        function showToast(message) {
-            toast.innerText = message;
-            toast.classList.add("show");
-            setTimeout(() => toast.classList.remove("show"), 2000);
-        }
+<span class="admin-badge admin-only">Admin Mode</span>
 
-        // --- DYNAMIC FORM FIELDS (depends on selected section) ---
-        const aircraftTypeSelect = document.getElementById("aircraftType");
-        const groupSerialNo  = document.getElementById("group-serialNo");
-        const groupKitsOrder = document.getElementById("group-kitsOrder");
-        const groupProjectNo2 = document.getElementById("group-projectNo2");
-        const groupWingSn    = document.getElementById("group-wingSn");
 
-        function updateFormFields() {
-            const isWings = aircraftTypeSelect.value === "Wings";
-            // Wings uses a SERIAL NO. column but no Kits Order, Kit Project No., or Wing S/N
-            groupSerialNo.style.display  = isWings ? "" : "none";
-            groupKitsOrder.style.display = isWings ? "none" : "";
-            groupProjectNo2.style.display = isWings ? "none" : "";
-            groupWingSn.style.display    = isWings ? "none" : "";
-        }
 
-        aircraftTypeSelect.addEventListener("change", updateFormFields);
-        updateFormFields();
+<button id="exportBtn" class="btn btn-outline">
 
-        // --- MODAL ---
-        editBtn.addEventListener("click", () => {
-            loginModal.style.display = "block";
-            loginError.style.display = "none";
-        });
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 
-        closeModal.addEventListener("click", () => { loginModal.style.display = "none"; });
+<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
 
-        window.addEventListener("click", (e) => {
-            if (e.target === loginModal || e.target.classList.contains('modal-overlay')) {
-                loginModal.style.display = "none";
-            }
-        });
+</svg>
 
-        // --- AUTH ---
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                body.classList.remove("logged-out");
-                body.classList.add("logged-in");
-                loginModal.style.display = "none";
-            } else {
-                body.classList.remove("logged-in");
-                body.classList.add("logged-out");
-            }
-        });
+Export PDF
 
-        loginForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-            const username = document.getElementById("username").value.trim();
-            const password = document.getElementById("password").value;
-            const fakeEmail = username + "@frcse.local";
-            signInWithEmailAndPassword(auth, fakeEmail, password)
-                .then(() => { loginForm.reset(); loginError.style.display = "none"; })
-                .catch((error) => { loginError.style.display = "block"; console.error("Login failed:", error); });
-        });
+</button>
 
-        logoutBtn.addEventListener("click", () => signOut(auth));
 
-        function showSkeletons() {
-            const skeletonHTML = `
-                <tr class="skeleton-row">
-                    <td><span></span></td><td class="group-end"><span></span></td>
-                    <td class="group-end"><span></span></td>
-                    <td><span></span></td><td class="group-end"><span></span></td>
-                    <td><span></span></td><td class="group-end"><span></span></td>
-                    <td class="group-end"><span></span></td>
-                    <td class="group-end"><span></span></td>
-                    <td><span></span></td>
-                </tr>`.repeat(3);
-            tbodyT6Usn.innerHTML = skeletonHTML;
-            tbodyUsaf.innerHTML = skeletonHTML;
 
-            const wingsSkeletonHTML = `
-                <tr class="skeleton-row">
-                    <td class="group-end"><span></span></td>
-                    <td><span></span></td><td class="group-end"><span></span></td>
-                    <td class="group-end"><span></span></td>
-                    <td><span></span></td><td class="group-end"><span></span></td>
-                    <td class="group-end"><span></span></td>
-                    <td><span></span></td>
-                </tr>`.repeat(3);
-            tbodyWings.innerHTML = wingsSkeletonHTML;
-        }
+<button id="editBtn" class="btn btn-primary public-only">
 
-        // --- DATA ---
-        async function loadData() {
-            showSkeletons();
-            
-            try {
-                const querySnapshot = await getDocs(entriesCollection);
-                
-                tbodyT6Usn.innerHTML = "";
-                tbodyUsaf.innerHTML = "";
-                tbodyWings.innerHTML = "";
-                
-                let allEntries = [];
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 
-                querySnapshot.forEach((documentSnapshot) => {
-                    let data = documentSnapshot.data();
-                    data.id = documentSnapshot.id;
-                    allEntries.push(data);
-                });
-                allEntries.sort((a, b) => (a.seq > b.seq ? -1 : a.seq < b.seq ? 1 : 0));
+<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
 
-                allEntries.forEach((data) => {
-                    const row = document.createElement("tr");
-                    row.setAttribute("data-id", data.id);
+</svg>
 
-                    if (data.aircraftType === "Wings") {
-                        row.innerHTML = `
-                            <td class="group-end editable-cell" data-field="serialNo">${data.serialNo || ''}</td>
-                            <td class="editable-cell" data-field="seq">${data.seq || ''}</td>
-                            <td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
-                            <td class="group-end editable-cell" data-field="eeOrder">${data.eeOrder || ''}</td>
-                            <td class="editable-cell" data-field="salesOrder">${data.salesOrder || ''}</td>
-                            <td class="group-end editable-cell" data-field="projectNo1">${data.projectNo1 || ''}</td>
-                            <td class="group-end editable-cell" data-field="repairId">${data.repairId || ''}</td>
-                            <td class="relative-cell editable-cell" data-field="tms">
-                                ${data.tms || ''}
-                                <button class="delete-btn admin-only" data-id="${data.id}">✕</button>
-                            </td>`;
-                        tbodyWings.appendChild(row);
-                    } else {
-                        row.innerHTML = `
-                            <td class="editable-cell" data-field="seq">${data.seq || ''}</td>
-                            <td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
-                            <td class="group-end editable-cell" data-field="eeOrder">${data.eeOrder || ''}</td>
-                            <td class="editable-cell" data-field="salesOrder">${data.salesOrder || ''}</td>
-                            <td class="group-end editable-cell" data-field="projectNo1">${data.projectNo1 || ''}</td>
-                            <td class="editable-cell" data-field="kitsOrder">${data.kitsOrder || ''}</td>
-                            <td class="group-end editable-cell" data-field="projectNo2">${data.projectNo2 || ''}</td>
-                            <td class="group-end editable-cell" data-field="repairId">${data.repairId || ''}</td>
-                            <td class="group-end editable-cell" data-field="tms">${data.tms || ''}</td>
-                            <td class="relative-cell editable-cell" data-field="wingSn">
-                                ${data.wingSn || ''}
-                                <button class="delete-btn admin-only" data-id="${data.id}">✕</button>
-                            </td>`;
-                        if (data.aircraftType === "T-6 USN") tbodyT6Usn.appendChild(row);
-                        else if (data.aircraftType === "USAF T-6 A/B") tbodyUsaf.appendChild(row);
-                    }
-                });
+Edit Mode
 
-                document.querySelectorAll(".delete-btn").forEach(button => {
-                    button.addEventListener("click", async (e) => {
-                        e.stopPropagation();
-                        const docId = e.target.getAttribute("data-id");
-                        if (confirm("Are you sure you want to delete this row?")) {
-                            try {
-                                await deleteDoc(doc(db, "workOrders", docId));
-                                loadData();
-                            } catch (error) { console.error("Error deleting doc:", error); alert("Error deleting row."); }
-                        }
-                    });
-                });
-            } catch (error) { console.error("Error loading documents: ", error); }
-        }
+</button>
 
-        // --- INLINE EDITING & CLIPBOARD ---
-        document.getElementById("appContainer").addEventListener("click", (e) => {
-            const cell = e.target.closest(".editable-cell");
-            if (!cell || e.target.classList.contains('delete-btn')) return;
-            if (body.classList.contains("logged-in")) {
-                cell.contentEditable = "true";
-                cell.focus();
-            } else {
-                const text = getTextWithoutButton(cell);
-                if (text) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        cell.classList.add("copied-flash");
-                        showToast(`Copied: ${text}`);
-                        setTimeout(() => cell.classList.remove("copied-flash"), 1000);
-                    }).catch(err => console.error('Failed to copy text: ', err));
-                }
-            }
-        });
+<button id="logoutBtn" class="btn btn-outline admin-only">
 
-        document.getElementById("appContainer").addEventListener("focusout", async (e) => {
-            const cell = e.target.closest(".editable-cell");
-            if (!cell || !body.classList.contains("logged-in") || cell.contentEditable !== "true") return;
-            cell.contentEditable = "false";
-            const newValue = getTextWithoutButton(cell);
-            const fieldName = cell.getAttribute("data-field");
-            const docId = cell.closest("tr").getAttribute("data-id");
-            if (docId && fieldName) {
-                try {
-                    await updateDoc(doc(db, "workOrders", docId), { [fieldName]: newValue });
-                } catch (error) { console.error("Error updating document: ", error); alert("Failed to save edit."); }
-            }
-        });
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 
-        document.getElementById("appContainer").addEventListener("keydown", (e) => {
-            const cell = e.target.closest(".editable-cell");
-            if (cell && cell.contentEditable === "true" && e.key === "Enter") {
-                e.preventDefault();
-                cell.blur();
-            }
-        });
+<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/>
 
-        orderForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const newEntry = {
-                aircraftType: document.getElementById("aircraftType").value,
-                serialNo: document.getElementById("serialNo").value,
-                seq: document.getElementById("seq").value,
-                buno: document.getElementById("buno").value,
-                eeOrder: document.getElementById("eeOrder").value,
-                salesOrder: document.getElementById("salesOrder").value,
-                projectNo1: document.getElementById("projectNo1").value,
-                kitsOrder: document.getElementById("kitsOrder").value,
-                projectNo2: document.getElementById("projectNo2").value,
-                repairId: document.getElementById("repairId").value,
-                tms: document.getElementById("tms").value,
-                wingSn: document.getElementById("wingSn").value,
-                timestamp: new Date()
-            };
-            try {
-                await addDoc(entriesCollection, newEntry);
-                orderForm.reset();
-                updateFormFields();
-                loadData();
-            } catch (error) { console.error("Error adding document: ", error); alert("Failed to save new entry."); }
-        });
+</svg>
 
-        // =============================================
-        //  PDF EXPORT
-        // =============================================
+Log Out
 
-function createLogoDataURL() {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-            const size = 128; // 128px is plenty for a 12mm PDF icon
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, size, size);
-            resolve(canvas.toDataURL('image/png'));
-        };
-        img.onerror = () => {
-            console.error("Failed to load WebP logo for PDF export.");
-            resolve(null);
-        };
-        img.src = 'https://raw.githubusercontent.com/FRCSE-EE/MoneyCard/a3abbb5ab8c29a275a4d0e935ed47139f09b82d3/image-47ce0f45.webp';
-    });
+</button>
+
+</div>
+
+</div>
+
+</header>
+
+
+
+<div id="loginModal" class="modal">
+
+<div class="modal-overlay"></div>
+
+<div class="modal-content">
+
+<button class="modal-close" id="closeModal">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+<path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+
+</svg>
+
+</button>
+
+<div class="modal-icon">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+
+</svg>
+
+</div>
+
+<div class="modal-title">Authorized Access</div>
+
+<div class="modal-subtitle">Enter your credentials to manage work orders.</div>
+
+<form id="loginForm" class="modal-form">
+
+<div class="form-group">
+
+<label for="username">Username</label>
+
+<input type="text" id="username" class="form-input" placeholder="Enter username" required>
+
+</div>
+
+<div class="form-group">
+
+<label for="password">Password</label>
+
+<input type="password" id="password" class="form-input" placeholder="Enter password" required>
+
+</div>
+
+<button type="submit" class="btn btn-primary">Log In</button>
+
+<div id="loginError">Invalid username or password. Please try again.</div>
+
+</form>
+
+</div>
+
+</div>
+
+
+
+<main class="main-content" id="appContainer">
+
+
+
+<div class="card admin-only" id="orderFormContainer">
+
+<div class="card-header">
+
+<h2>Add New Work Order</h2>
+
+<p>Fill in the fields below and submit to create a new entry.</p>
+
+</div>
+
+<div class="card-body">
+
+<form id="orderForm">
+
+<div class="form-grid">
+
+<div class="form-group form-group-wide">
+
+<label for="aircraftType">Aircraft Section</label>
+
+<select id="aircraftType" class="form-select" required>
+
+<option value="" disabled selected>Select aircraft section…</option>
+
+<option value="T-6 USN">T-6 USN (Navy)</option>
+
+<option value="USAF T-6 A/B">USAF T-6 A/B</option>
+
+<option value="Wings">Wings</option>
+
+</select>
+
+</div>
+
+<div class="form-group" id="group-serialNo" style="display:none;">
+
+<label for="serialNo">Serial No.</label>
+
+<input type="text" id="serialNo" class="form-input" placeholder="Serial number">
+
+</div>
+
+<div class="form-group">
+
+<label for="seq">SEQ</label>
+
+<input type="text" id="seq" class="form-input" placeholder="e.g. 6C99" required>
+
+</div>
+
+<div class="form-group">
+
+<label for="buno">BUNO</label>
+
+<input type="text" id="buno" class="form-input" placeholder="e.g. 166321" required>
+
+</div>
+
+<div class="form-group">
+
+<label for="eeOrder">E&amp;E Order</label>
+
+<input type="text" id="eeOrder" class="form-input" placeholder="E&E order #">
+
+</div>
+
+<div class="form-group">
+
+<label for="salesOrder">Sales Order</label>
+
+<input type="text" id="salesOrder" class="form-input" placeholder="Sales order #">
+
+</div>
+
+<div class="form-group">
+
+<label for="projectNo1">A/C Project No.</label>
+
+<input type="text" id="projectNo1" class="form-input" placeholder="Project number">
+
+</div>
+
+<div class="form-group" id="group-kitsOrder">
+
+<label for="kitsOrder">Kits Order</label>
+
+<input type="text" id="kitsOrder" class="form-input" placeholder="Kits order #">
+
+</div>
+
+<div class="form-group" id="group-projectNo2">
+
+<label for="projectNo2">Kit Project No.</label>
+
+<input type="text" id="projectNo2" class="form-input" placeholder="Project number">
+
+</div>
+
+<div class="form-group">
+
+<label for="repairId">Repair ID</label>
+
+<input type="text" id="repairId" class="form-input" placeholder="Repair ID">
+
+</div>
+
+<div class="form-group">
+
+<label for="tms">T/M/S</label>
+
+<input type="text" id="tms" class="form-input" placeholder="Type / Model / Series">
+
+</div>
+
+<div class="form-group" id="group-wingSn">
+
+<label for="wingSn">Wing S/N</label>
+
+<input type="text" id="wingSn" class="form-input" placeholder="Wing serial #">
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button type="submit" class="btn btn-primary btn-lg">
+
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 5v14M5 12h14"/></svg>
+
+Submit to Database
+
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+</div>
+
+
+
+<section class="data-section">
+
+<div class="section-accent accent-usn"></div>
+
+<div class="section-header aircraft-header">
+
+<div class="aircraft-graphic">
+
+<img src="https://raw.githubusercontent.com/JRDN-R/MoneyCard/391dfe38f632fef40ceea8ead755335957eb0fed/T6USN.svg" alt="T-6 Navy">
+
+</div>
+
+<div class="aircraft-title">
+
+<span class="title-main">T-6</span>
+
+<span class="title-sub">A/B</span>
+
+<span class="title-branch">(USN)</span>
+
+</div>
+
+</div>
+
+<div class="table-scroll">
+
+<table id="table-t6-usn">
+
+<thead><tr>
+
+<th>SEQ</th><th class="group-end">BUNO</th>
+
+<th class="group-end">E&amp;E ORDER</th>
+
+<th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+
+<th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+
+<th class="group-end">REPAIR ID</th>
+
+<th class="group-end">T/M/S</th>
+
+<th>WING S/N</th>
+
+</tr></thead>
+
+<tbody id="tbody-t6-usn"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+
+<section class="data-section">
+
+<div class="section-accent accent-usaf"></div>
+
+<div class="section-header aircraft-header">
+
+<div class="aircraft-graphic">
+
+<img src="https://raw.githubusercontent.com/JRDN-R/MoneyCard/391dfe38f632fef40ceea8ead755335957eb0fed/T6USAF.svg" alt="T-6 Air Force">
+
+</div>
+
+<div class="aircraft-title">
+
+<span class="title-main">T-6</span>
+
+<span class="title-sub">A</span>
+
+<span class="title-branch">(USAF)</span>
+
+</div>
+
+</div>
+
+<div class="table-scroll">
+
+<table id="table-usaf">
+
+<thead><tr>
+
+<th>SEQ</th><th class="group-end">BUNO</th>
+
+<th class="group-end">E&amp;E ORDER</th>
+
+<th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+
+<th>KITS ORDER</th><th class="group-end">PROJECT NO.</th>
+
+<th class="group-end">REPAIR ID</th>
+
+<th class="group-end">T/M/S</th>
+
+<th>WING S/N</th>
+
+</tr></thead>
+
+<tbody id="tbody-usaf"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+
+<section class="data-section">
+
+<div class="section-accent accent-wings"></div>
+
+<div class="section-header aircraft-header">
+
+<div class="aircraft-title">
+
+<span class="title-main">Wings</span>
+
+</div>
+
+</div>
+
+<div class="table-scroll">
+
+<table id="table-wings">
+
+<thead><tr>
+
+<th class="group-end">SERIAL NO.</th>
+
+<th>SEQ</th><th class="group-end">BUNO</th>
+
+<th class="group-end">E&amp;E ORDER</th>
+
+<th>SALES ORDER</th><th class="group-end">PROJECT NO.</th>
+
+<th class="group-end">REPAIR ID</th>
+
+<th>T/M/S</th>
+
+</tr></thead>
+
+<tbody id="tbody-wings"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+
+</main>
+
+
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyCgBv4t4llQ0-pfG3wFW8cvaOofzyGL62o",
+
+authDomain: "moneycard-frcse.firebaseapp.com",
+
+projectId: "moneycard-frcse",
+
+storageBucket: "moneycard-frcse.firebasestorage.app",
+
+messagingSenderId: "20037122489",
+
+appId: "1:20037122489:web:9300ef68c4896a2c071e68"
+
+};
+
+
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+const auth = getAuth(app);
+
+const entriesCollection = collection(db, "workOrders");
+
+
+
+const body = document.body;
+
+const editBtn = document.getElementById("editBtn");
+
+const logoutBtn = document.getElementById("logoutBtn");
+
+const loginModal = document.getElementById("loginModal");
+
+const closeModal = document.getElementById("closeModal");
+
+const loginForm = document.getElementById("loginForm");
+
+const loginError = document.getElementById("loginError");
+
+const toast = document.getElementById("toast");
+
+const exportBtn = document.getElementById("exportBtn");
+
+
+
+const orderForm = document.getElementById("orderForm");
+
+const tbodyT6Usn = document.getElementById("tbody-t6-usn");
+
+const tbodyUsaf = document.getElementById("tbody-usaf");
+
+const tbodyWings = document.getElementById("tbody-wings");
+
+
+
+// --- UTILITY ---
+
+function getTextWithoutButton(cell) {
+
+let text = "";
+
+for (let node of cell.childNodes) {
+
+if (node.nodeType === Node.ELEMENT_NODE &&
+
+(node.classList.contains('delete-btn') || node.classList.contains('drag-handle'))) continue;
+
+text += node.textContent;
+
 }
 
-        function scrapeTableBody(tbodyEl) {
-            const rows = [];
-            tbodyEl.querySelectorAll('tr').forEach(tr => {
-                const cells = [];
-                tr.querySelectorAll('td').forEach(td => {
-                    let text = '';
-                    for (const node of td.childNodes) {
-                        if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('delete-btn')) continue;
-                        text += node.textContent;
-                    }
-                    cells.push(text.trim());
-                });
-                rows.push(cells);
-            });
-            return rows;
-        }
+return text.trim();
 
-        async function fetchFontBase64(url) {
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`Font fetch ${resp.status}`);
-            const buf  = await resp.arrayBuffer();
-            const bytes = new Uint8Array(buf);
-            let bin = '';
-            for (let i = 0; i < bytes.length; i += 8192) {
-                bin += String.fromCharCode.apply(
-                    null, bytes.subarray(i, Math.min(i + 8192, bytes.length))
-                );
-            }
-            return btoa(bin);
-        }
+}
 
-        // Header colors for the standard (USN / USAF) 10-column layout
-        const STD_HDR_COLORS = {
-            0:  { fill: [244, 220, 124], text: [0, 0, 0]       },
-            1:  { fill: [244, 220, 124], text: [0, 0, 0]       },
-            2:  { fill: [212, 224, 196], text: [0, 0, 0]       },
-            3:  { fill: [177, 210, 229], text: [0, 0, 0]       },
-            4:  { fill: [177, 210, 229], text: [0, 0, 0]       },
-            5:  { fill: [212, 177, 229], text: [0, 0, 0]       },
-            6:  { fill: [212, 177, 229], text: [0, 0, 0]       },
-            7:  { fill: [177, 210, 229], text: [0, 0, 0]       },
-            8:  { fill: [233, 184, 165], text: [0, 0, 0]       },
-            9:  { fill: [25,  30,  30 ], text: [255, 255, 255] },
-        };
 
-        // Header colors for the Wings 8-column layout
-        const WINGS_HDR_COLORS = {
-            0:  { fill: [25,  30,  30 ], text: [255, 255, 255] }, // SERIAL NO.
-            1:  { fill: [244, 220, 124], text: [0, 0, 0]       }, // SEQ
-            2:  { fill: [244, 220, 124], text: [0, 0, 0]       }, // BUNO
-            3:  { fill: [212, 224, 196], text: [0, 0, 0]       }, // E&E ORDER
-            4:  { fill: [177, 210, 229], text: [0, 0, 0]       }, // SALES ORDER
-            5:  { fill: [177, 210, 229], text: [0, 0, 0]       }, // PROJECT NO.
-            6:  { fill: [177, 210, 229], text: [0, 0, 0]       }, // REPAIR ID
-            7:  { fill: [233, 184, 165], text: [0, 0, 0]       }, // T/M/S
-        };
 
-        const STD_COLS = [
-            'SEQ', 'BUNO', 'E&E ORDER', 'SALES ORDER',
-            'PROJECT NO.', 'KITS ORDER', 'PROJECT NO.',
-            'REPAIR ID', 'T/M/S', 'WING S/N'
-        ];
+function showToast(message) {
 
-        const WINGS_COLS = [
-            'SERIAL NO.', 'SEQ', 'BUNO', 'E&E ORDER',
-            'SALES ORDER', 'PROJECT NO.', 'REPAIR ID', 'T/M/S'
-        ];
+toast.innerText = message;
 
-        async function exportPDF() {
+toast.classList.add("show");
 
-            const { jsPDF } = window.jspdf;
+setTimeout(() => toast.classList.remove("show"), 2000);
 
-            const pdfDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-            const pageW   = 215.9;
-            const pageH   = 279.4;
-            const margin  = 12;
-            const contentW = pageW - margin * 2;
-            let y = margin;
+}
 
-            const pad = (n) => String(n).padStart(2, '0');
-            const now = new Date();
 
-            let hasAnonPro = false;
-            try {
-                const [b64Regular, b64Bold] = await Promise.all([
-                    fetchFontBase64(
-                        'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anonymouspro/AnonymousPro-Regular.ttf'
-                    ),
-                    fetchFontBase64(
-                        'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anonymouspro/AnonymousPro-Bold.ttf'
-                    ),
-                ]);
-                pdfDoc.addFileToVFS('AnonymousPro-Regular.ttf', b64Regular);
-                pdfDoc.addFont('AnonymousPro-Regular.ttf', 'AnonymousPro', 'normal');
-                pdfDoc.addFileToVFS('AnonymousPro-Bold.ttf', b64Bold);
-                pdfDoc.addFont('AnonymousPro-Bold.ttf', 'AnonymousPro', 'bold');
-                hasAnonPro = true;
-            } catch (e) {
-                console.warn('Anonymous Pro unavailable for PDF; using Courier fallback.', e);
-            }
 
-            const dataFont = hasAnonPro ? 'AnonymousPro' : 'courier';
+// Grip icon markup injected into the first cell of every row (admin only)
 
-            const logoDataURL = await createLogoDataURL();
-            const logoSize = 12;
-            if (logoDataURL) {
-                pdfDoc.addImage(logoDataURL, 'PNG', margin, y, logoSize, logoSize);
-            } else {
-                pdfDoc.setFillColor(59, 130, 246);
-                pdfDoc.roundedRect(margin, y, logoSize, logoSize, 1.2, 1.2, 'F');
-            }
+const DRAG_HANDLE_HTML = `<span class="drag-handle admin-only" contenteditable="false" title="Drag to reorder rows"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.7"/><circle cx="15" cy="5" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="19" r="1.7"/><circle cx="15" cy="19" r="1.7"/></svg></span>`;
 
-            pdfDoc.setFont('helvetica', 'bold');
-            pdfDoc.setFontSize(11);
-            pdfDoc.setTextColor(15, 23, 42);
-            pdfDoc.text('MoneyCard', margin + logoSize + 3, y + 4.5);
 
-            pdfDoc.setFont('helvetica', 'normal');
-            pdfDoc.setFontSize(6);
-            pdfDoc.setTextColor(148, 163, 184);
-            pdfDoc.text('TRAINERS E&E 62911', margin + logoSize + 3, y + 8.5);
 
-            const dateStr = `${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${now.getFullYear()}`;
-            pdfDoc.setFont('courier', 'normal');
-            pdfDoc.setFontSize(9);
-            pdfDoc.setTextColor(15, 23, 42);
-            pdfDoc.text(dateStr, pageW - margin, y + 6, { align: 'right' });
+// --- DYNAMIC FORM FIELDS (depends on selected section) ---
 
-            y += logoSize + 4;
+const aircraftTypeSelect = document.getElementById("aircraftType");
 
-            pdfDoc.setDrawColor(210, 218, 226);
-            pdfDoc.setLineWidth(0.3);
-            pdfDoc.line(margin, y, pageW - margin, y);
-            y += 4;
+const groupSerialNo = document.getElementById("group-serialNo");
 
-            const sections = [
-                { name: 'T-6 A/B', sub: 'Navy',      color: [202, 138, 4],  tbodyId: 'tbody-t6-usn', columns: STD_COLS,   headerColors: STD_HDR_COLORS   },
-                { name: 'T-6 A',   sub: 'Air Force', color: [8, 145, 178],  tbodyId: 'tbody-usaf',   columns: STD_COLS,   headerColors: STD_HDR_COLORS   },
-                { name: 'Wings',   sub: '',          color: [16, 185, 129], tbodyId: 'tbody-wings',  columns: WINGS_COLS, headerColors: WINGS_HDR_COLORS },
-            ];
+const groupKitsOrder = document.getElementById("group-kitsOrder");
 
-            for (const sec of sections) {
+const groupProjectNo2 = document.getElementById("group-projectNo2");
 
-                if (y > pageH - 30) { pdfDoc.addPage(); y = margin; }
+const groupWingSn = document.getElementById("group-wingSn");
 
-                pdfDoc.setFillColor(...sec.color);
-                pdfDoc.roundedRect(margin, y, 2.5, 4, 0.8, 0.8, 'F');
 
-                pdfDoc.setFont('helvetica', 'bold');
-                pdfDoc.setFontSize(9);
-                pdfDoc.setTextColor(15, 23, 42);
-                pdfDoc.text(sec.name, margin + 5, y + 3);
 
-                if (sec.sub) {
-                    const nameW = pdfDoc.getTextWidth(sec.name);
-                    pdfDoc.setFont('helvetica', 'normal');
-                    pdfDoc.setFontSize(6);
-                    pdfDoc.setTextColor(148, 163, 184);
-                    pdfDoc.text(sec.sub, margin + 5 + nameW + 2.5, y + 3);
-                }
+function updateFormFields() {
 
-                y += 7;
+const isWings = aircraftTypeSelect.value === "Wings";
 
-                const rows = scrapeTableBody(document.getElementById(sec.tbodyId));
+// Wings uses a SERIAL NO. column but no Kits Order, Kit Project No., or Wing S/N
 
-                if (rows.length === 0) {
-                    pdfDoc.setFont('helvetica', 'italic');
-                    pdfDoc.setFontSize(7);
-                    pdfDoc.setTextColor(148, 163, 184);
-                    pdfDoc.text('No entries', margin + 5, y + 2.5);
-                    y += 7;
-                } else {
-                    pdfDoc.autoTable({
-                        startY: y,
-                        head: [sec.columns],
-                        body: rows,
-                        margin: { left: margin, right: margin },
-                        tableWidth: contentW,
-                        showHead: 'everyPage',
+groupSerialNo.style.display = isWings ? "" : "none";
 
-                        styles: {
-                            font: dataFont,
-                            fontSize: 9.0,
-                            cellPadding: { top: 1.0, right: 1.5, bottom: 1.0, left: 1.5 },
-                            lineColor: [210, 218, 226],
-                            lineWidth: 0.2,
-                            textColor: [0, 0, 0],
-                            overflow: 'ellipsize',
-                            halign: 'left',
-                        },
+groupKitsOrder.style.display = isWings ? "none" : "";
 
-                        headStyles: {
-                            font: dataFont,
-                            fontStyle: 'bold',
-                            fontSize: 7,
-                            fillColor: [241, 245, 249],
-                            textColor: [0, 0, 0],
-                            cellPadding: { top: 1.2, right: 1.5, bottom: 1.2, left: 1.5 },
-                            halign: 'left',
-                        },
+groupProjectNo2.style.display = isWings ? "none" : "";
 
-                        alternateRowStyles: {
-                            fillColor: [248, 250, 252],
-                        },
-                        bodyStyles: {
-                            fillColor: [255, 255, 255],
-                        },
-                        theme: 'grid',
+groupWingSn.style.display = isWings ? "none" : "";
 
-                        didParseCell: function (data) {
-                            if (data.section === 'head') {
-                                const map = sec.headerColors[data.column.index];
-                                if (map) {
-                                    data.cell.styles.fillColor = map.fill;
-                                    data.cell.styles.textColor = map.text;
-                                }
-                            }
-                        },
-                    });
+}
 
-                    y = pdfDoc.lastAutoTable.finalY + 6;
-                }
-            }
 
-            const fName = `MoneyCard_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.pdf`;
-            pdfDoc.save(fName);
-        }
 
-        exportBtn.addEventListener("click", exportPDF);
+aircraftTypeSelect.addEventListener("change", updateFormFields);
 
-        // --- BOOT ---
-        loadData();
-    </script>
+updateFormFields();
+
+
+
+// --- MODAL ---
+
+editBtn.addEventListener("click", () => {
+
+loginModal.style.display = "block";
+
+loginError.style.display = "none";
+
+});
+
+
+
+closeModal.addEventListener("click", () => { loginModal.style.display = "none"; });
+
+
+
+window.addEventListener("click", (e) => {
+
+if (e.target === loginModal || e.target.classList.contains('modal-overlay')) {
+
+loginModal.style.display = "none";
+
+}
+
+});
+
+
+
+// --- AUTH ---
+
+onAuthStateChanged(auth, (user) => {
+
+if (user) {
+
+body.classList.remove("logged-out");
+
+body.classList.add("logged-in");
+
+loginModal.style.display = "none";
+
+} else {
+
+body.classList.remove("logged-in");
+
+body.classList.add("logged-out");
+
+}
+
+// Only allow row drag-and-drop while logged in.
+
+const loggedIn = !!user;
+
+sortableInstances.forEach(s => s.option("disabled", !loggedIn));
+
+});
+
+
+
+loginForm.addEventListener("submit", (e) => {
+
+e.preventDefault();
+
+const username = document.getElementById("username").value.trim();
+
+const password = document.getElementById("password").value;
+
+const fakeEmail = username + "@frcse.local";
+
+signInWithEmailAndPassword(auth, fakeEmail, password)
+
+.then(() => { loginForm.reset(); loginError.style.display = "none"; })
+
+.catch((error) => { loginError.style.display = "block"; console.error("Login failed:", error); });
+
+});
+
+
+
+logoutBtn.addEventListener("click", () => signOut(auth));
+
+
+
+function showSkeletons() {
+
+const skeletonHTML = `
+
+<tr class="skeleton-row">
+
+<td><span></span></td><td class="group-end"><span></span></td>
+
+<td class="group-end"><span></span></td>
+
+<td><span></span></td><td class="group-end"><span></span></td>
+
+<td><span></span></td><td class="group-end"><span></span></td>
+
+<td class="group-end"><span></span></td>
+
+<td class="group-end"><span></span></td>
+
+<td><span></span></td>
+
+</tr>`.repeat(3);
+
+tbodyT6Usn.innerHTML = skeletonHTML;
+
+tbodyUsaf.innerHTML = skeletonHTML;
+
+
+
+const wingsSkeletonHTML = `
+
+<tr class="skeleton-row">
+
+<td class="group-end"><span></span></td>
+
+<td><span></span></td><td class="group-end"><span></span></td>
+
+<td class="group-end"><span></span></td>
+
+<td><span></span></td><td class="group-end"><span></span></td>
+
+<td class="group-end"><span></span></td>
+
+<td><span></span></td>
+
+</tr>`.repeat(3);
+
+tbodyWings.innerHTML = wingsSkeletonHTML;
+
+}
+
+
+
+// --- DATA ---
+
+async function loadData() {
+
+showSkeletons();
+
+
+try {
+
+const querySnapshot = await getDocs(entriesCollection);
+
+
+tbodyT6Usn.innerHTML = "";
+
+tbodyUsaf.innerHTML = "";
+
+tbodyWings.innerHTML = "";
+
+
+let allEntries = [];
+
+
+
+querySnapshot.forEach((documentSnapshot) => {
+
+let data = documentSnapshot.data();
+
+data.id = documentSnapshot.id;
+
+allEntries.push(data);
+
+});
+
+
+
+// Manual drag order takes priority. Rows that have never been
+
+// dragged (no "order" field) fall back to the original SEQ sort.
+
+allEntries.sort((a, b) => {
+
+const ao = (typeof a.order === "number") ? a.order : Number.MAX_SAFE_INTEGER;
+
+const bo = (typeof b.order === "number") ? b.order : Number.MAX_SAFE_INTEGER;
+
+if (ao !== bo) return ao - bo;
+
+return (a.seq > b.seq ? -1 : a.seq < b.seq ? 1 : 0);
+
+});
+
+
+
+allEntries.forEach((data) => {
+
+const row = document.createElement("tr");
+
+row.setAttribute("data-id", data.id);
+
+
+
+if (data.aircraftType === "Wings") {
+
+row.innerHTML = `
+
+<td class="drag-cell group-end editable-cell" data-field="serialNo">${DRAG_HANDLE_HTML}${data.serialNo || ''}</td>
+
+<td class="editable-cell" data-field="seq">${data.seq || ''}</td>
+
+<td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
+
+<td class="group-end editable-cell" data-field="eeOrder">${data.eeOrder || ''}</td>
+
+<td class="editable-cell" data-field="salesOrder">${data.salesOrder || ''}</td>
+
+<td class="group-end editable-cell" data-field="projectNo1">${data.projectNo1 || ''}</td>
+
+<td class="group-end editable-cell" data-field="repairId">${data.repairId || ''}</td>
+
+<td class="relative-cell editable-cell" data-field="tms">
+
+${data.tms || ''}
+
+<button class="delete-btn admin-only" data-id="${data.id}">✕</button>
+
+</td>`;
+
+tbodyWings.appendChild(row);
+
+} else {
+
+row.innerHTML = `
+
+<td class="drag-cell editable-cell" data-field="seq">${DRAG_HANDLE_HTML}${data.seq || ''}</td>
+
+<td class="group-end editable-cell" data-field="buno">${data.buno || ''}</td>
+
+<td class="group-end editable-cell" data-field="eeOrder">${data.eeOrder || ''}</td>
+
+<td class="editable-cell" data-field="salesOrder">${data.salesOrder || ''}</td>
+
+<td class="group-end editable-cell" data-field="projectNo1">${data.projectNo1 || ''}</td>
+
+<td class="editable-cell" data-field="kitsOrder">${data.kitsOrder || ''}</td>
+
+<td class="group-end editable-cell" data-field="projectNo2">${data.projectNo2 || ''}</td>
+
+<td class="group-end editable-cell" data-field="repairId">${data.repairId || ''}</td>
+
+<td class="group-end editable-cell" data-field="tms">${data.tms || ''}</td>
+
+<td class="relative-cell editable-cell" data-field="wingSn">
+
+${data.wingSn || ''}
+
+<button class="delete-btn admin-only" data-id="${data.id}">✕</button>
+
+</td>`;
+
+if (data.aircraftType === "T-6 USN") tbodyT6Usn.appendChild(row);
+
+else if (data.aircraftType === "USAF T-6 A/B") tbodyUsaf.appendChild(row);
+
+}
+
+});
+
+
+
+document.querySelectorAll(".delete-btn").forEach(button => {
+
+button.addEventListener("click", async (e) => {
+
+e.stopPropagation();
+
+const docId = e.target.getAttribute("data-id");
+
+if (confirm("Are you sure you want to delete this row?")) {
+
+try {
+
+await deleteDoc(doc(db, "workOrders", docId));
+
+loadData();
+
+} catch (error) { console.error("Error deleting doc:", error); alert("Error deleting row."); }
+
+}
+
+});
+
+});
+
+} catch (error) { console.error("Error loading documents: ", error); }
+
+}
+
+
+
+// =============================================
+
+// ROW DRAG-AND-DROP (manual sort)
+
+// =============================================
+
+let sortableInstances = [];
+
+
+
+// Re-number every row in a table body and persist the new order to Firestore.
+
+async function persistOrder(tbodyEl) {
+
+const rows = [...tbodyEl.querySelectorAll('tr[data-id]')];
+
+const updates = rows.map((row, index) =>
+
+updateDoc(doc(db, "workOrders", row.getAttribute("data-id")), { order: index })
+
+);
+
+try {
+
+await Promise.all(updates);
+
+showToast("Order saved");
+
+} catch (err) {
+
+console.error("Error saving row order:", err);
+
+alert("Failed to save the new row order.");
+
+}
+
+}
+
+
+
+function setupSortable() {
+
+if (typeof Sortable === "undefined") {
+
+console.warn("SortableJS failed to load; row drag-and-drop disabled.");
+
+return;
+
+}
+
+const makeOptions = (tbodyEl) => ({
+
+handle: ".drag-handle", // only the grip starts a drag
+
+draggable: "tr",
+
+filter: ".skeleton-row", // never drag loading placeholders
+
+animation: 160, // smooth "shift to make room"
+
+easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+
+ghostClass: "row-ghost",
+
+chosenClass: "row-chosen",
+
+dragClass: "row-drag",
+
+disabled: !body.classList.contains("logged-in"),
+
+onEnd: (evt) => {
+
+if (evt.oldIndex !== evt.newIndex) persistOrder(tbodyEl);
+
+}
+
+});
+
+[tbodyT6Usn, tbodyUsaf, tbodyWings].forEach(tb => {
+
+sortableInstances.push(Sortable.create(tb, makeOptions(tb)));
+
+});
+
+}
+
+
+
+// --- INLINE EDITING & CLIPBOARD ---
+
+document.getElementById("appContainer").addEventListener("click", (e) => {
+
+// Clicking the drag handle must never trigger edit/copy.
+
+if (e.target.closest(".drag-handle")) return;
+
+
+
+const cell = e.target.closest(".editable-cell");
+
+if (!cell || e.target.classList.contains('delete-btn')) return;
+
+if (body.classList.contains("logged-in")) {
+
+cell.contentEditable = "true";
+
+cell.focus();
+
+} else {
+
+const text = getTextWithoutButton(cell);
+
+if (text) {
+
+navigator.clipboard.writeText(text).then(() => {
+
+cell.classList.add("copied-flash");
+
+showToast(`Copied: ${text}`);
+
+setTimeout(() => cell.classList.remove("copied-flash"), 1000);
+
+}).catch(err => console.error('Failed to copy text: ', err));
+
+}
+
+}
+
+});
+
+
+
+document.getElementById("appContainer").addEventListener("focusout", async (e) => {
+
+const cell = e.target.closest(".editable-cell");
+
+if (!cell || !body.classList.contains("logged-in") || cell.contentEditable !== "true") return;
+
+cell.contentEditable = "false";
+
+const newValue = getTextWithoutButton(cell);
+
+const fieldName = cell.getAttribute("data-field");
+
+const docId = cell.closest("tr").getAttribute("data-id");
+
+if (docId && fieldName) {
+
+try {
+
+await updateDoc(doc(db, "workOrders", docId), { [fieldName]: newValue });
+
+} catch (error) { console.error("Error updating document: ", error); alert("Failed to save edit."); }
+
+}
+
+});
+
+
+
+document.getElementById("appContainer").addEventListener("keydown", (e) => {
+
+const cell = e.target.closest(".editable-cell");
+
+if (cell && cell.contentEditable === "true" && e.key === "Enter") {
+
+e.preventDefault();
+
+cell.blur();
+
+}
+
+});
+
+
+
+orderForm.addEventListener("submit", async (e) => {
+
+e.preventDefault();
+
+const newEntry = {
+
+aircraftType: document.getElementById("aircraftType").value,
+
+serialNo: document.getElementById("serialNo").value,
+
+seq: document.getElementById("seq").value,
+
+buno: document.getElementById("buno").value,
+
+eeOrder: document.getElementById("eeOrder").value,
+
+salesOrder: document.getElementById("salesOrder").value,
+
+projectNo1: document.getElementById("projectNo1").value,
+
+kitsOrder: document.getElementById("kitsOrder").value,
+
+projectNo2: document.getElementById("projectNo2").value,
+
+repairId: document.getElementById("repairId").value,
+
+tms: document.getElementById("tms").value,
+
+wingSn: document.getElementById("wingSn").value,
+
+timestamp: new Date()
+
+};
+
+try {
+
+await addDoc(entriesCollection, newEntry);
+
+orderForm.reset();
+
+updateFormFields();
+
+loadData();
+
+} catch (error) { console.error("Error adding document: ", error); alert("Failed to save new entry."); }
+
+});
+
+
+
+// =============================================
+
+// PDF EXPORT
+
+// =============================================
+
+
+
+function createLogoDataURL() {
+
+return new Promise((resolve) => {
+
+const img = new Image();
+
+img.crossOrigin = 'Anonymous';
+
+img.onload = () => {
+
+const size = 128; // 128px is plenty for a 12mm PDF icon
+
+const canvas = document.createElement('canvas');
+
+canvas.width = size;
+
+canvas.height = size;
+
+const ctx = canvas.getContext('2d');
+
+ctx.drawImage(img, 0, 0, size, size);
+
+resolve(canvas.toDataURL('image/png'));
+
+};
+
+img.onerror = () => {
+
+console.error("Failed to load WebP logo for PDF export.");
+
+resolve(null);
+
+};
+
+img.src = 'https://raw.githubusercontent.com/FRCSE-EE/MoneyCard/a3abbb5ab8c29a275a4d0e935ed47139f09b82d3/image-47ce0f45.webp';
+
+});
+
+}
+
+
+
+function scrapeTableBody(tbodyEl) {
+
+const rows = [];
+
+tbodyEl.querySelectorAll('tr').forEach(tr => {
+
+const cells = [];
+
+tr.querySelectorAll('td').forEach(td => {
+
+let text = '';
+
+for (const node of td.childNodes) {
+
+if (node.nodeType === Node.ELEMENT_NODE &&
+
+(node.classList.contains('delete-btn') || node.classList.contains('drag-handle'))) continue;
+
+text += node.textContent;
+
+}
+
+cells.push(text.trim());
+
+});
+
+rows.push(cells);
+
+});
+
+return rows;
+
+}
+
+
+
+async function fetchFontBase64(url) {
+
+const resp = await fetch(url);
+
+if (!resp.ok) throw new Error(`Font fetch ${resp.status}`);
+
+const buf = await resp.arrayBuffer();
+
+const bytes = new Uint8Array(buf);
+
+let bin = '';
+
+for (let i = 0; i < bytes.length; i += 8192) {
+
+bin += String.fromCharCode.apply(
+
+null, bytes.subarray(i, Math.min(i + 8192, bytes.length))
+
+);
+
+}
+
+return btoa(bin);
+
+}
+
+
+
+// Header colors for the standard (USN / USAF) 10-column layout
+
+const STD_HDR_COLORS = {
+
+0: { fill: [244, 220, 124], text: [0, 0, 0] },
+
+1: { fill: [244, 220, 124], text: [0, 0, 0] },
+
+2: { fill: [212, 224, 196], text: [0, 0, 0] },
+
+3: { fill: [177, 210, 229], text: [0, 0, 0] },
+
+4: { fill: [177, 210, 229], text: [0, 0, 0] },
+
+5: { fill: [212, 177, 229], text: [0, 0, 0] },
+
+6: { fill: [212, 177, 229], text: [0, 0, 0] },
+
+7: { fill: [177, 210, 229], text: [0, 0, 0] },
+
+8: { fill: [233, 184, 165], text: [0, 0, 0] },
+
+9: { fill: [25, 30, 30 ], text: [255, 255, 255] },
+
+};
+
+
+
+// Header colors for the Wings 8-column layout
+
+const WINGS_HDR_COLORS = {
+
+0: { fill: [25, 30, 30 ], text: [255, 255, 255] }, // SERIAL NO.
+
+1: { fill: [244, 220, 124], text: [0, 0, 0] }, // SEQ
+
+2: { fill: [244, 220, 124], text: [0, 0, 0] }, // BUNO
+
+3: { fill: [212, 224, 196], text: [0, 0, 0] }, // E&E ORDER
+
+4: { fill: [177, 210, 229], text: [0, 0, 0] }, // SALES ORDER
+
+5: { fill: [177, 210, 229], text: [0, 0, 0] }, // PROJECT NO.
+
+6: { fill: [177, 210, 229], text: [0, 0, 0] }, // REPAIR ID
+
+7: { fill: [233, 184, 165], text: [0, 0, 0] }, // T/M/S
+
+};
+
+
+
+const STD_COLS = [
+
+'SEQ', 'BUNO', 'E&E ORDER', 'SALES ORDER',
+
+'PROJECT NO.', 'KITS ORDER', 'PROJECT NO.',
+
+'REPAIR ID', 'T/M/S', 'WING S/N'
+
+];
+
+
+
+const WINGS_COLS = [
+
+'SERIAL NO.', 'SEQ', 'BUNO', 'E&E ORDER',
+
+'SALES ORDER', 'PROJECT NO.', 'REPAIR ID', 'T/M/S'
+
+];
+
+
+
+async function exportPDF() {
+
+
+
+const { jsPDF } = window.jspdf;
+
+
+
+const pdfDoc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+
+const pageW = 215.9;
+
+const pageH = 279.4;
+
+const margin = 12;
+
+const contentW = pageW - margin * 2;
+
+let y = margin;
+
+
+
+const pad = (n) => String(n).padStart(2, '0');
+
+const now = new Date();
+
+
+
+let hasAnonPro = false;
+
+try {
+
+const [b64Regular, b64Bold] = await Promise.all([
+
+fetchFontBase64(
+
+'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anonymouspro/AnonymousPro-Regular.ttf'
+
+),
+
+fetchFontBase64(
+
+'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anonymouspro/AnonymousPro-Bold.ttf'
+
+),
+
+]);
+
+pdfDoc.addFileToVFS('AnonymousPro-Regular.ttf', b64Regular);
+
+pdfDoc.addFont('AnonymousPro-Regular.ttf', 'AnonymousPro', 'normal');
+
+pdfDoc.addFileToVFS('AnonymousPro-Bold.ttf', b64Bold);
+
+pdfDoc.addFont('AnonymousPro-Bold.ttf', 'AnonymousPro', 'bold');
+
+hasAnonPro = true;
+
+} catch (e) {
+
+console.warn('Anonymous Pro unavailable for PDF; using Courier fallback.', e);
+
+}
+
+
+
+const dataFont = hasAnonPro ? 'AnonymousPro' : 'courier';
+
+
+
+const logoDataURL = await createLogoDataURL();
+
+const logoSize = 12;
+
+if (logoDataURL) {
+
+pdfDoc.addImage(logoDataURL, 'PNG', margin, y, logoSize, logoSize);
+
+} else {
+
+pdfDoc.setFillColor(59, 130, 246);
+
+pdfDoc.roundedRect(margin, y, logoSize, logoSize, 1.2, 1.2, 'F');
+
+}
+
+
+
+pdfDoc.setFont('helvetica', 'bold');
+
+pdfDoc.setFontSize(11);
+
+pdfDoc.setTextColor(15, 23, 42);
+
+pdfDoc.text('MoneyCard', margin + logoSize + 3, y + 4.5);
+
+
+
+pdfDoc.setFont('helvetica', 'normal');
+
+pdfDoc.setFontSize(6);
+
+pdfDoc.setTextColor(148, 163, 184);
+
+pdfDoc.text('TRAINERS E&E 62911', margin + logoSize + 3, y + 8.5);
+
+
+
+const dateStr = `${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${now.getFullYear()}`;
+
+pdfDoc.setFont('courier', 'normal');
+
+pdfDoc.setFontSize(9);
+
+pdfDoc.setTextColor(15, 23, 42);
+
+pdfDoc.text(dateStr, pageW - margin, y + 6, { align: 'right' });
+
+
+
+y += logoSize + 4;
+
+
+
+pdfDoc.setDrawColor(210, 218, 226);
+
+pdfDoc.setLineWidth(0.3);
+
+pdfDoc.line(margin, y, pageW - margin, y);
+
+y += 4;
+
+
+
+const sections = [
+
+{ name: 'T-6 A/B', sub: 'Navy', color: [202, 138, 4], tbodyId: 'tbody-t6-usn', columns: STD_COLS, headerColors: STD_HDR_COLORS },
+
+{ name: 'T-6 A', sub: 'Air Force', color: [8, 145, 178], tbodyId: 'tbody-usaf', columns: STD_COLS, headerColors: STD_HDR_COLORS },
+
+{ name: 'Wings', sub: '', color: [16, 185, 129], tbodyId: 'tbody-wings', columns: WINGS_COLS, headerColors: WINGS_HDR_COLORS },
+
+];
+
+
+
+for (const sec of sections) {
+
+
+
+if (y > pageH - 30) { pdfDoc.addPage(); y = margin; }
+
+
+
+pdfDoc.setFillColor(...sec.color);
+
+pdfDoc.roundedRect(margin, y, 2.5, 4, 0.8, 0.8, 'F');
+
+
+
+pdfDoc.setFont('helvetica', 'bold');
+
+pdfDoc.setFontSize(9);
+
+pdfDoc.setTextColor(15, 23, 42);
+
+pdfDoc.text(sec.name, margin + 5, y + 3);
+
+
+
+if (sec.sub) {
+
+const nameW = pdfDoc.getTextWidth(sec.name);
+
+pdfDoc.setFont('helvetica', 'normal');
+
+pdfDoc.setFontSize(6);
+
+pdfDoc.setTextColor(148, 163, 184);
+
+pdfDoc.text(sec.sub, margin + 5 + nameW + 2.5, y + 3);
+
+}
+
+
+
+y += 7;
+
+
+
+const rows = scrapeTableBody(document.getElementById(sec.tbodyId));
+
+
+
+if (rows.length === 0) {
+
+pdfDoc.setFont('helvetica', 'italic');
+
+pdfDoc.setFontSize(7);
+
+pdfDoc.setTextColor(148, 163, 184);
+
+pdfDoc.text('No entries', margin + 5, y + 2.5);
+
+y += 7;
+
+} else {
+
+pdfDoc.autoTable({
+
+startY: y,
+
+head: [sec.columns],
+
+body: rows,
+
+margin: { left: margin, right: margin },
+
+tableWidth: contentW,
+
+showHead: 'everyPage',
+
+
+
+styles: {
+
+font: dataFont,
+
+fontSize: 9.0,
+
+cellPadding: { top: 1.0, right: 1.5, bottom: 1.0, left: 1.5 },
+
+lineColor: [210, 218, 226],
+
+lineWidth: 0.2,
+
+textColor: [0, 0, 0],
+
+overflow: 'ellipsize',
+
+halign: 'left',
+
+},
+
+
+
+headStyles: {
+
+font: dataFont,
+
+fontStyle: 'bold',
+
+fontSize: 7,
+
+fillColor: [241, 245, 249],
+
+textColor: [0, 0, 0],
+
+cellPadding: { top: 1.2, right: 1.5, bottom: 1.2, left: 1.5 },
+
+halign: 'left',
+
+},
+
+
+
+alternateRowStyles: {
+
+fillColor: [248, 250, 252],
+
+},
+
+bodyStyles: {
+
+fillColor: [255, 255, 255],
+
+},
+
+theme: 'grid',
+
+
+
+didParseCell: function (data) {
+
+if (data.section === 'head') {
+
+const map = sec.headerColors[data.column.index];
+
+if (map) {
+
+data.cell.styles.fillColor = map.fill;
+
+data.cell.styles.textColor = map.text;
+
+}
+
+}
+
+},
+
+});
+
+
+
+y = pdfDoc.lastAutoTable.finalY + 6;
+
+}
+
+}
+
+
+
+const fName = `MoneyCard_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}.pdf`;
+
+pdfDoc.save(fName);
+
+}
+
+
+
+exportBtn.addEventListener("click", exportPDF);
+
+
+
+// --- BOOT ---
+
+setupSortable();
+
+loadData();
+
+</script>
+
 </body>
+
 </html>
